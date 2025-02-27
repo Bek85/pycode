@@ -18,14 +18,17 @@ code_prompt = PromptTemplate(
   input_variables=["language", "task"]
 )
 
-code_chain = LLMChain(
-  llm=llm,
-  prompt=code_prompt
-)
+# Chain the prompt and the model
+code_chain = code_prompt | llm
 
+# Invoke the chain
 response = code_chain.invoke({
   "language": "Python",
   "task": "return the sum of two numbers"
 })
+
+## Save the response to a file
+with open("code.py", "w") as f:
+  f.write(response)
 
 print(response)
