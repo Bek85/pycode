@@ -1,1 +1,5 @@
 .env
+# ignore all files with the extension .py
+*.py
+# except for the file main.py
+!main.py
