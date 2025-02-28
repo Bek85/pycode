@@ -3,6 +3,8 @@ from dotenv import load_dotenv
 from langchain_openai import OpenAI
 from langchain.prompts import PromptTemplate
 import argparse
+from langchain.chains import LLMChain, SequentialChain
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--language", type=str, default="python")
@@ -11,39 +13,42 @@ parser.add_argument("--extension", type=str, default="py")
 args = parser.parse_args()
 
 
-
 # Load environment variables from .env file
 load_dotenv()
 
 # Get API key from environment variable
-llm = OpenAI(openai_api_key=os.getenv('OPENAI_API_KEY'))
+llm = OpenAI(openai_api_key=os.getenv("OPENAI_API_KEY"))
 
 code_prompt = PromptTemplate(
-  template="""
+    template="""
   You are a helpful assistant that can write code in {language}.
   Write a function that will {task}.
   """,
-  input_variables=["language", "task"]
+    input_variables=["language", "task"],
+)
+
+test_prompt = PromptTemplate(
+    template="""
+  Write a test for the following {language} code:\n{code}
+  """,
+    input_variables=["language", "code"],
 )
 
 # Chain the prompt and the model
-code_chain = code_prompt | llm
+code_chain = LLMChain(llm=llm, prompt=code_prompt, output_key="code")
+test_chain = LLMChain(llm=llm, prompt=test_prompt, output_key="test")
+
+chain = SequentialChain(
+    chains=[code_chain, test_chain],
+    input_variables=["task", "language"],
+    output_variables=["test", "code"],
+)
 
 # Invoke the chain
-response = code_chain.invoke({
-  "language": args.language,
-  "task": args.task
-})
-
-## Save the response to a file
-# create a file extension based on the language
-file_extension = "py" if args.language == "python" else args.extension
-
-# create a file name based on the language and task
-file_name = f"{args.language}_task.{file_extension}"
+response = chain.invoke({"language": args.language, "task": args.task})
 
 
-with open(file_name, "w") as f:
-  f.write(response)
-
-print(response)
+print(">>>>>>>>>> GENERATED CODE <<<<<<<<<<")
+print(response["code"])
+print(">>>>>>>>>> GENERATED TEST <<<<<<<<<<")
+print(response["test"])
