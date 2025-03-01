@@ -3,3 +3,4 @@
 *.py
 # except for the file main.py
 !main.py
+!code-test-generator.py
