@@ -7,13 +7,17 @@ from langchain.chat_models import ChatOpenAI
 from langchain.chains import LLMChain
 from dotenv import load_dotenv
 import os
-from langchain.memory import ConversationBufferMemory
+from langchain.memory import ConversationBufferMemory, FileChatMessageHistory
 
 load_dotenv()
 
 chat = ChatOpenAI(model="gpt-4o-mini", openai_api_key=os.getenv("OPENAI_API_KEY"))
 
-memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
+memory = ConversationBufferMemory(
+    chat_memory=FileChatMessageHistory(file_path="chat_history.json"),
+    memory_key="chat_history",
+    return_messages=True,
+)
 
 
 prompt = ChatPromptTemplate(
