@@ -3,15 +3,11 @@ from langchain.prompts import (
     ChatPromptTemplate,
     MessagesPlaceholder,
 )
-from langchain.chat_models import ChatOpenAI
-from langchain.chains import LLMChain
+from langchain_openai import ChatOpenAI
+from langchain_core.runnables import RunnableWithMessageHistory
+from langchain_community.chat_message_histories import FileChatMessageHistory
 from dotenv import load_dotenv
 import os
-from langchain.memory import (
-    ConversationBufferMemory,
-    FileChatMessageHistory,
-    ConversationSummaryMemory,
-)
 
 load_dotenv()
 
@@ -19,27 +15,30 @@ chat = ChatOpenAI(
     model="gpt-4o-mini", openai_api_key=os.getenv("OPENAI_API_KEY"), verbose=True
 )
 
-memory = ConversationSummaryMemory(
-    llm=chat,
-    chat_memory=FileChatMessageHistory(file_path="chat_history.json"),
-    memory_key="chat_history",
-    return_messages=True,
-)
+
+def get_chat_history(session_id: str) -> FileChatMessageHistory:
+    return FileChatMessageHistory(file_path="chat_history.json")
+
 
 prompt = ChatPromptTemplate(
-    input_variables=["content", "chat_history"],
     messages=[
         MessagesPlaceholder(variable_name="chat_history"),
         HumanMessagePromptTemplate.from_template("{content}"),
-    ],
+    ]
 )
 
+chain = prompt | chat
 
-chain = LLMChain(llm=chat, prompt=prompt, memory=memory, verbose=True)
-
+chain_with_history = RunnableWithMessageHistory(
+    chain,
+    get_chat_history,
+    input_messages_key="content",
+    history_messages_key="chat_history",
+)
 
 while True:
     user_input = input(">> ")
-    result = chain.invoke({"content": user_input})
-
-    print(result["text"])
+    result = chain_with_history.invoke(
+        {"content": user_input}, config={"configurable": {"session_id": "default"}}
+    )
+    print(result.content)
