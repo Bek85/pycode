@@ -2,6 +2,12 @@ from dotenv import load_dotenv
 from langchain_openai import OpenAI # new import syntax for OpenAI. With this import, you can not specify the model name and other parameters.
 from langchain.prompts import PromptTemplate
 from langchain.chat_models import init_chat_model
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--language", type=str, default="python")
+parser.add_argument("--task", type=str, default="return the sum of two numbers")
+args = parser.parse_args()
 
 
 load_dotenv()
@@ -24,7 +30,7 @@ task = input("Enter the task description: ")
 chain = code_prompt | llm
 
 # Invoke the chain
-result = chain.invoke({"language": language, "task": task})
+result = chain.invoke({"language": language or args.language , "task": task or args.task})
 
 # Format the output in a readable way
 print("\nGenerated Code:")
