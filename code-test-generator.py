@@ -1,6 +1,6 @@
 import os
 from dotenv import load_dotenv
-from langchain_openai import OpenAI
+from langchain_openai import OpenAI # new import syntax for OpenAI
 from langchain.prompts import PromptTemplate
 import argparse
 from langchain_core.runnables import RunnablePassthrough
@@ -17,6 +17,7 @@ args = parser.parse_args()
 load_dotenv()
 
 # Get API key from environment variable
+# There is no need to pass the api key as a parameter as it is already loaded in load_dotenv() function call
 llm = OpenAI(openai_api_key=os.getenv("OPENAI_API_KEY"))
 
 code_prompt = PromptTemplate(
@@ -51,6 +52,7 @@ chain = (
 
 # Invoke the chain
 response = chain.invoke({"language": args.language, "task": args.task})
+
 
 
 print(">>>>>>>>>> GENERATED CODE <<<<<<<<<<")
