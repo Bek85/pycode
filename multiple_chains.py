@@ -1,6 +1,7 @@
 from dotenv import load_dotenv
 from langchain.prompts import PromptTemplate
 from langchain.chat_models import init_chat_model
+from langchain_core.runnables import RunnableParallel, RunnablePassthrough
 import argparse
 from operator import itemgetter
 
@@ -43,18 +44,21 @@ final_task = task or args.task
 
 # Create a chain that combines code generation and test generation
 chain = (
-    {
-        "language": itemgetter("language"),
-        "task": itemgetter("task")
-    }
-    | code_prompt
-    | llm
-    | (lambda code_response: {
-        "language": final_language,
-        "content": code_response.content
+    RunnableParallel({
+        "language": lambda x: x["language"],
+        "task": lambda x: x["task"]
     })
-    | test_prompt
-    | llm
+    | RunnableParallel({
+        "code": code_prompt | llm,
+        "language": lambda x: x["language"]
+    })
+    | RunnableParallel({
+        "code": lambda x: x["code"],
+        "test": lambda x: (test_prompt | llm).invoke({
+            "language": x["language"],
+            "content": x["code"].content
+        })
+    })
 )
 
 # Invoke the chain with the inputs
@@ -66,7 +70,8 @@ result = chain.invoke({
 # Format and print the output
 print("\nGenerated Code and Tests:")
 print("=" * 50)
-content = result.content if hasattr(result, 'content') else str(result)
-formatted_content = content.strip()
-print(formatted_content)
+print("Code:")
+print(result["code"].content.strip())
+print("\nTests:")
+print(result["test"].content.strip())
 print("=" * 50)
