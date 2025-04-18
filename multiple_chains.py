@@ -68,10 +68,11 @@ result = chain.invoke({
 })
 
 # Format and print the output
-print("\nGenerated Code and Tests:")
+print("\nGenerated Code:")
 print("=" * 50)
-print("Code:")
 print(result["code"].content.strip())
-print("\nTests:")
+
+print("\nGenerated Tests:")
+print("=" * 50)
 print(result["test"].content.strip())
 print("=" * 50)

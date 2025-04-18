@@ -3,17 +3,15 @@ from langchain.prompts import (
     ChatPromptTemplate,
     MessagesPlaceholder,
 )
-from langchain_openai import ChatOpenAI
+from langchain.chat_models import init_chat_model
 from langchain_core.runnables import RunnableWithMessageHistory
 from langchain_community.chat_message_histories import FileChatMessageHistory
 from dotenv import load_dotenv
-import os
+
 
 load_dotenv()
 
-chat = ChatOpenAI(
-    model="gpt-4o-mini", openai_api_key=os.getenv("OPENAI_API_KEY"), verbose=True
-)
+chat_model = init_chat_model(model="gpt-4o-mini", model_provider="openai")
 
 
 def get_chat_history(session_id: str) -> FileChatMessageHistory:
@@ -21,13 +19,14 @@ def get_chat_history(session_id: str) -> FileChatMessageHistory:
 
 
 prompt = ChatPromptTemplate(
+    input_variables=["chat_history", "content"],
     messages=[
         MessagesPlaceholder(variable_name="chat_history"),
         HumanMessagePromptTemplate.from_template("{content}"),
-    ]
+    ],
 )
 
-chain = prompt | chat
+chain = prompt | chat_model
 
 chain_with_history = RunnableWithMessageHistory(
     chain,
