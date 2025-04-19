@@ -1,2 +1,6 @@
 .env
+chat_history.json
+/emb
+/__pycache__
+
 # ignore all files with the extension .py
