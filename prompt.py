@@ -1,5 +1,6 @@
 from dotenv import load_dotenv
 from langchain_openai import OpenAIEmbeddings, ChatOpenAI
+from langchain.chat_models import init_chat_model
 from langchain_chroma import Chroma
 from langchain.chains import RetrievalQA
 from redundant_filter_retriever import RedundantFilterRetriever
@@ -10,18 +11,27 @@ langchain.debug = True
 
 load_dotenv()
 
-chat = ChatOpenAI(model="gpt-4o-mini")
+# Initialize the LLM
+llm = init_chat_model("gpt-4o-mini", model_provider="openai")
 
+# Initialize the embeddings
 embeddings = OpenAIEmbeddings()
 
+# Initialize the Chroma database
 db = Chroma(persist_directory="emb", embedding_function=embeddings)
 
-retriever = RedundantFilterRetriever(embeddings=embeddings, chroma=db)
+# Initialize the retriever
+retriever = db.as_retriever()
 
+# Initialize the retriever
+# retriever = RedundantFilterRetriever(embeddings=embeddings, chroma=db)
+
+# Initialize the chain
 chain = RetrievalQA.from_chain_type(
-    llm=chat, chain_type="stuff", retriever=retriever, verbose=True
+    llm=llm, chain_type="stuff", retriever=retriever, verbose=True
 )
 
+# Invoke the chain
 result = chain.invoke(
     {"query": "What is the interesting fact about the English language?"}
 )

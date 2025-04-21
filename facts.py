@@ -7,15 +7,17 @@ from langchain_community.vectorstores import Chroma
 
 load_dotenv()
 
-
+# Initialize the embeddings
 embeddings = OpenAIEmbeddings()
 
 # emb = embeddings.embed_query("Happy!")
 
 # print(emb)
 
+# Initialize the text splitter
 text_splitter = CharacterTextSplitter(separator="\n", chunk_size=200, chunk_overlap=0)
 
+# Load and split the documents
 loader = TextLoader("facts.txt")
 documents = loader.load_and_split(text_splitter)
 
@@ -23,9 +25,11 @@ documents = loader.load_and_split(text_splitter)
 #     print(doc.page_content)
 #     print("\n")
 
+
+# Embed and store the documents
 db = Chroma.from_documents(documents, embedding=embeddings, persist_directory="emb")
 
-
+# Search for similar documents
 results = db.similarity_search(
     "What is an interesting fact about the English language?"
 )
