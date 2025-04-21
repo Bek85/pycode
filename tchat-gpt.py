@@ -15,7 +15,7 @@ chat_model = init_chat_model(model="gpt-4o-mini", model_provider="openai")
 
 
 def get_chat_history(session_id: str) -> FileChatMessageHistory:
-    return FileChatMessageHistory(file_path="chat_history.json")
+    return FileChatMessageHistory(file_path=f"chat_history_{session_id}.json")
 
 
 prompt = ChatPromptTemplate(

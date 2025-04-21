@@ -1,5 +1,6 @@
 .env
 chat_history.json
+chat_history_*.json
 /emb
 /__pycache__
 
