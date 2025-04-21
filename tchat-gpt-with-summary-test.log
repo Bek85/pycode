@@ -1,0 +1,105 @@
+2025-04-21 15:42:38,441 - INFO - Starting test conversation
+2025-04-21 15:42:38,459 - INFO - User input: what is 1+1?
+2025-04-21 15:42:38,459 - INFO - Getting chat history for session: default
+2025-04-21 15:42:38,466 - INFO - 
+=== Chain Input ===
+
+Current Input: what is 1+1?
+==================
+
+2025-04-21 15:42:38,469 - INFO - 
+=== Chain Input ===
+No chat history yet
+
+Current Input: what is 1+1?
+==================
+
+2025-04-21 15:42:38,717 - INFO - 
+========= Final LLM Input =========
+Token count: 9
+Number of messages: 1
+
+Actual content being sent to LLM:
+
+Human: what is 1+1?
+=================================
+
+2025-04-21 15:42:39,541 - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-04-21 15:42:39,550 - INFO - Added message: human - what is 1+1?
+2025-04-21 15:42:39,550 - INFO - Added message: ai - 1 + 1 equals 2.
+2025-04-21 15:42:39,551 - INFO - Assistant response: 1 + 1 equals 2.
+2025-04-21 15:42:39,551 - INFO - User input: and 3 more?
+2025-04-21 15:42:39,551 - INFO - Getting chat history for session: default
+2025-04-21 15:42:39,551 - INFO - 
+=== Chain Input ===
+
+Current Input: and 3 more?
+==================
+
+2025-04-21 15:42:39,555 - INFO - 
+=== Chain Input ===
+
+Chat History (2 messages):
+Total history tokens: 15
+human: what is 1+1?
+ai: 1 + 1 equals 2.
+
+Current Input: and 3 more?
+==================
+
+2025-04-21 15:42:39,557 - INFO - 
+========= Final LLM Input =========
+Token count: 27
+Number of messages: 1
+
+Actual content being sent to LLM:
+
+Human: what is 1+1?
+AI: 1 + 1 equals 2.
+Human: and 3 more?
+=================================
+
+2025-04-21 15:42:40,377 - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-04-21 15:42:40,379 - INFO - Added message: human - and 3 more?
+2025-04-21 15:42:40,379 - INFO - Added message: ai - If you add 3 more to 2, the calculation would be 2 + 3, which equals 5.
+2025-04-21 15:42:40,381 - INFO - Assistant response: If you add 3 more to 2, the calculation would be 2 + 3, which equals 5.
+2025-04-21 15:42:40,381 - INFO - User input: and 10 more?
+2025-04-21 15:42:40,381 - INFO - Getting chat history for session: default
+2025-04-21 15:42:40,382 - INFO - 
+=== Chain Input ===
+
+Current Input: and 10 more?
+==================
+
+2025-04-21 15:42:40,384 - INFO - 
+=== Chain Input ===
+
+Chat History (4 messages):
+Total history tokens: 45
+human: what is 1+1?
+ai: 1 + 1 equals 2.
+human: and 3 more?
+ai: If you add 3 more to 2, the calculation would be 2 + 3, which equals 5.
+
+Current Input: and 10 more?
+==================
+
+2025-04-21 15:42:40,386 - INFO - 
+========= Final LLM Input =========
+Token count: 61
+Number of messages: 1
+
+Actual content being sent to LLM:
+
+Human: what is 1+1?
+AI: 1 + 1 equals 2.
+Human: and 3 more?
+AI: If you add 3 more to 2, the calculation would be 2 + 3, which equals 5.
+Human: and 10 more?
+=================================
+
+2025-04-21 15:42:41,227 - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-04-21 15:42:41,239 - INFO - Added message: human - and 10 more?
+2025-04-21 15:42:41,239 - INFO - Added message: ai - If you add 10 more to 5, the calculation would be 5 + 10, which equals 15.
+2025-04-21 15:42:41,239 - INFO - Assistant response: If you add 10 more to 5, the calculation would be 5 + 10, which equals 15.
+2025-04-21 15:42:41,240 - INFO - Test conversation completed
