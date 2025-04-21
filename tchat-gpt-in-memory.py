@@ -6,12 +6,32 @@ from langchain.prompts import (
 from langchain.chat_models import init_chat_model
 from langchain_core.runnables import RunnableWithMessageHistory
 from langchain_community.chat_message_histories import ChatMessageHistory
+from langchain_core.callbacks import BaseCallbackHandler
 from dotenv import load_dotenv
 
 
 load_dotenv()
 
-chat_model = init_chat_model(model="gpt-4o-mini", model_provider="openai")
+
+class DebugCallbackHandler(BaseCallbackHandler):
+    def on_llm_start(self, serialized, prompts, **kwargs):
+        """Print messages when LLM starts running"""
+        print("\n\n========= LLM Input =========")
+        for prompt in prompts:
+            print(prompt)
+        print("============================\n")
+
+
+# Create debug flag
+DEBUG_MODE = True
+
+
+# Initialize callback handler for debugging
+debug_callbacks = [DebugCallbackHandler()] if DEBUG_MODE else []
+
+chat_model = init_chat_model(
+    model="gpt-4o-mini", model_provider="openai", callbacks=debug_callbacks
+)
 
 # Create an in-memory message history
 message_history = ChatMessageHistory()
