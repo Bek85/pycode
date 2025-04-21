@@ -10,7 +10,7 @@ load_dotenv()
 
 embeddings = OpenAIEmbeddings()
 
-# emb = embeddings.embed_query("Hello, world!")
+# emb = embeddings.embed_query("Happy!")
 
 # print(emb)
 
@@ -18,6 +18,10 @@ text_splitter = CharacterTextSplitter(separator="\n", chunk_size=200, chunk_over
 
 loader = TextLoader("facts.txt")
 documents = loader.load_and_split(text_splitter)
+
+# for doc in documents:
+#     print(doc.page_content)
+#     print("\n")
 
 db = Chroma.from_documents(documents, embedding=embeddings, persist_directory="emb")
 
