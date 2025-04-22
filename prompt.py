@@ -21,12 +21,14 @@ embeddings = OpenAIEmbeddings()
 db = Chroma(persist_directory="emb", embedding_function=embeddings)
 
 # Initialize the retriever
-retriever = db.as_retriever()
+# retriever = db.as_retriever()
 
 # Initialize the retriever
-# retriever = RedundantFilterRetriever(embeddings=embeddings, chroma=db)
+retriever = RedundantFilterRetriever(embeddings=embeddings, chroma=db)
 
 # Initialize the chain
+# chain_type="stuff" is a type of chain that uses the retriever to retrieve the most relevant documents and then use the LLM to answer the question
+
 chain = RetrievalQA.from_chain_type(
     llm=llm, chain_type="stuff", retriever=retriever, verbose=True
 )
