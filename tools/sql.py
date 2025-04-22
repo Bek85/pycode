@@ -7,6 +7,14 @@ def get_db_connection():
     return conn
 
 
+def list_tables():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+    rows = cursor.fetchall()
+    return "\n".join([row[0] for row in rows if row[0] is not None])
+
+
 def execute_query(query):
     conn = get_db_connection()
     cursor = conn.cursor()
