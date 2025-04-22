@@ -28,4 +28,4 @@ agent = create_openai_functions_agent(llm, tools, prompt)
 
 agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
 
-agent_executor.invoke({"input": "List the columns of the orders table?"})
+agent_executor.invoke({"input": "How many users have provided an address?"})

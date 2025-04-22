@@ -10,8 +10,11 @@ def get_db_connection():
 def execute_query(query):
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute(query)
-    return cursor.fetchall()
+    try:
+        cursor.execute(query)
+        return cursor.fetchall()
+    except sqlite3.OperationalError as err:
+        return f"The following error occurred: {str(err)}"
 
 
 run_query_tool = Tool.from_function(
