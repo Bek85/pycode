@@ -13,12 +13,15 @@ from tools.report import generate_report_tool
 import langchain
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_core.chat_history import BaseChatMessageHistory
+from handlers.chat_model_start_handler import ChatModelStartHandler
 
 # langchain.debug = True
 
 load_dotenv()
 
-llm = init_chat_model("gpt-4o-mini", model_provider="openai")
+handler = ChatModelStartHandler()
+
+llm = init_chat_model("gpt-4o-mini", model_provider="openai", callbacks=[handler])
 
 
 # Instead of using ConversationBufferMemory, use the message history approach
@@ -71,7 +74,7 @@ agent = create_openai_functions_agent(llm, tools, prompt)
 agent_executor = AgentExecutor(
     agent=agent,
     tools=tools,
-    verbose=True,
+    # verbose=True,
 )
 
 
