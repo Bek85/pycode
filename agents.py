@@ -11,15 +11,34 @@ from langchain.agents import AgentExecutor
 from tools.sql import run_query_tool, list_tables, describe_tables, describe_tables_tool
 from tools.report import generate_report_tool
 import langchain
-from langchain.memory import ConversationBufferMemory
+from langchain_core.runnables.history import RunnableWithMessageHistory
+from langchain_core.chat_history import BaseChatMessageHistory
 
-langchain.debug = True
+# langchain.debug = True
 
 load_dotenv()
 
 llm = init_chat_model("gpt-4o-mini", model_provider="openai")
 
-memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
+
+# Instead of using ConversationBufferMemory, use the message history approach
+# This will be passed to the agent_executor later
+class ChatMessageHistory(BaseChatMessageHistory):
+    def __init__(self):
+        self.messages = []
+
+    def add_message(self, message):
+        self.messages.append(message)
+
+    def clear(self):
+        self.messages = []
+
+    def get_messages(self):
+        return self.messages
+
+
+# Initialize message history
+message_history = ChatMessageHistory()
 
 tools = [run_query_tool, describe_tables_tool, generate_report_tool]
 
@@ -48,11 +67,32 @@ prompt = ChatPromptTemplate(
 
 agent = create_openai_functions_agent(llm, tools, prompt)
 
-agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True, memory=memory)
+# Configure agent executor without memory (we'll handle history differently)
+agent_executor = AgentExecutor(
+    agent=agent,
+    tools=tools,
+    verbose=True,
+)
+
+
+# Create a function to get chat history
+def get_message_history(session_id):
+    return message_history
+
+
+# Wrap the executor in a RunnableWithMessageHistory
+runnable_agent = RunnableWithMessageHistory(
+    agent_executor,
+    get_message_history,
+    input_messages_key="input",
+    history_messages_key="chat_history",
+)
 
 
 def run_query(user_query):
-    return agent_executor.invoke({"input": user_query})
+    return runnable_agent.invoke(
+        {"input": user_query}, {"configurable": {"session_id": "default"}}
+    )
 
 
 while True:
