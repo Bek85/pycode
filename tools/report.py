@@ -1,10 +1,23 @@
 from langchain.tools import StructuredTool
 from pydantic.v1 import BaseModel
+import os
 
 
 def generate_report(filename, html):
-    with open(filename, "w") as f:
+    # Get the current script's directory (project root)
+    current_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    # Create the reports directory path
+    reports_dir = os.path.join(current_dir, "reports")
+    # Ensure reports directory exists
+    os.makedirs(reports_dir, exist_ok=True)
+    # Create the full file path
+    file_path = os.path.join(reports_dir, f"{filename}.html")
+
+    # Write the file
+    with open(file_path, "w") as f:
         f.write(html)
+
+    print(f"Report saved to: {file_path}")
 
 
 class GenerateReportArgsSchema(BaseModel):
