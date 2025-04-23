@@ -22,7 +22,10 @@ tables = list_tables()
 prompt = ChatPromptTemplate(
     messages=[
         SystemMessagePromptTemplate.from_template(
-            f"You are a helpful database assistant. The database contains these tables: {tables}"
+            "You are a helpful database assistant.\n"
+            f"The database has tables of: {tables}\n"
+            "Do not make any assumptions about what tables exist "
+            "or what columns exist. Instead, use the describe_tables function.\n"
         ),
         HumanMessagePromptTemplate.from_template("{input}"),
         MessagesPlaceholder(variable_name="agent_scratchpad"),
