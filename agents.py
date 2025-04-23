@@ -8,8 +8,10 @@ from langchain.prompts import (
     SystemMessagePromptTemplate,
 )
 from langchain.agents import AgentExecutor
-from tools.sql import run_query_tool, list_tables, describe_tables_tool
+from tools.sql import run_query_tool, list_tables, describe_tables, describe_tables_tool
+import langchain
 
+langchain.debug = True
 
 load_dotenv()
 
@@ -18,6 +20,12 @@ llm = init_chat_model("gpt-4o-mini", model_provider="openai")
 tools = [run_query_tool, describe_tables_tool]
 
 tables = list_tables()
+
+# table_list = tables.split("\n")
+
+# des_tables = describe_tables(table_list)
+
+# print(des_tables)
 
 prompt = ChatPromptTemplate(
     messages=[
