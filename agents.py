@@ -11,12 +11,15 @@ from langchain.agents import AgentExecutor
 from tools.sql import run_query_tool, list_tables, describe_tables, describe_tables_tool
 from tools.report import generate_report_tool
 import langchain
+from langchain.memory import ConversationBufferMemory
 
 langchain.debug = True
 
 load_dotenv()
 
 llm = init_chat_model("gpt-4o-mini", model_provider="openai")
+
+memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
 
 tools = [run_query_tool, describe_tables_tool, generate_report_tool]
 
@@ -36,6 +39,7 @@ prompt = ChatPromptTemplate(
             "Do not make any assumptions about what tables exist "
             "or what columns exist. Instead, use the describe_tables function.\n"
         ),
+        MessagesPlaceholder(variable_name="chat_history"),
         HumanMessagePromptTemplate.from_template("{input}"),
         MessagesPlaceholder(variable_name="agent_scratchpad"),
     ],
@@ -44,7 +48,7 @@ prompt = ChatPromptTemplate(
 
 agent = create_openai_functions_agent(llm, tools, prompt)
 
-agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
+agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True, memory=memory)
 
 
 def run_query(user_query):
@@ -56,7 +60,7 @@ while True:
     # Use default query if user input is empty
     user_query = (
         user_input
-        or "Summarize top 5 most popular products. Write the results to a report file."
+        or "How many orders are there? Write the result to an html report file."
     )
     result = run_query(user_query)
     print(result["output"])
