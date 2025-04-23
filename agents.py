@@ -9,6 +9,7 @@ from langchain.prompts import (
 )
 from langchain.agents import AgentExecutor
 from tools.sql import run_query_tool, list_tables, describe_tables, describe_tables_tool
+from tools.report import generate_report_tool
 import langchain
 
 langchain.debug = True
@@ -17,7 +18,7 @@ load_dotenv()
 
 llm = init_chat_model("gpt-4o-mini", model_provider="openai")
 
-tools = [run_query_tool, describe_tables_tool]
+tools = [run_query_tool, describe_tables_tool, generate_report_tool]
 
 tables = list_tables()
 
@@ -51,6 +52,11 @@ def run_query(user_query):
 
 
 while True:
-    user_query = input("Enter your database query: ")
+    user_input = input("Enter your query: ")
+    # Use default query if user input is empty
+    user_query = (
+        user_input
+        or "Summarize top 5 most popular products. Write the results to a report file."
+    )
     result = run_query(user_query)
     print(result["output"])
