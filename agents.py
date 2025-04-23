@@ -8,14 +8,14 @@ from langchain.prompts import (
     SystemMessagePromptTemplate,
 )
 from langchain.agents import AgentExecutor
-from tools.sql import run_query_tool, list_tables
+from tools.sql import run_query_tool, list_tables, describe_tables_tool
 
 
 load_dotenv()
 
 llm = init_chat_model("gpt-4o-mini", model_provider="openai")
 
-tools = [run_query_tool]
+tools = [run_query_tool, describe_tables_tool]
 
 tables = list_tables()
 
