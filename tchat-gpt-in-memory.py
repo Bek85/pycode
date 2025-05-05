@@ -3,6 +3,7 @@ from langchain.prompts import (
     ChatPromptTemplate,
     MessagesPlaceholder,
 )
+from langchain_openai import ChatOpenAI
 from langchain.chat_models import init_chat_model
 from langchain_core.runnables import RunnableWithMessageHistory
 from langchain_community.chat_message_histories import ChatMessageHistory
@@ -29,9 +30,19 @@ DEBUG_MODE = True
 # Initialize callback handler for debugging
 debug_callbacks = [DebugCallbackHandler()] if DEBUG_MODE else []
 
-chat_model = init_chat_model(
+# Initialize ChatOpenAI model with remote model from openai
+remote_chat_model = init_chat_model(
     model="gpt-4o-mini", model_provider="openai", callbacks=debug_callbacks
 )
+
+
+# Initialize ChatOpenAI with local model
+local_chat_model = ChatOpenAI(
+    model="llama3-8b-8192",
+    openai_api_base="http://127.0.0.1:1234/v1",
+    callbacks=debug_callbacks,
+)
+
 
 # Create an in-memory message history
 message_history = ChatMessageHistory()
@@ -49,7 +60,7 @@ prompt = ChatPromptTemplate(
     ],
 )
 
-chain = prompt | chat_model
+chain = prompt | remote_chat_model
 
 chain_with_history = RunnableWithMessageHistory(
     chain,
