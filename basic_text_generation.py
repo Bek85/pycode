@@ -12,11 +12,14 @@ load_dotenv()
 
 
 local_chat_model = ChatOpenAI(
-    model="llama3-8b-8192",
+    model="gemma-3-12b-it-qat",
     openai_api_base="http://127.0.0.1:1234/v1",
 )
 
-remote_chat_model = init_chat_model(model="llama3-8b-8192", model_provider="openai")
+remote_chat_model = init_chat_model(
+    model="gpt-4o-mini",
+    model_provider="openai",
+)
 
 
 user_input = input("Enter a prompt: ")

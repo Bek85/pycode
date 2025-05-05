@@ -38,7 +38,7 @@ remote_chat_model = init_chat_model(
 
 # Initialize ChatOpenAI with local model
 local_chat_model = ChatOpenAI(
-    model="llama3-8b-8192",
+    model="gemma-3-12b-it-qat",
     openai_api_base="http://127.0.0.1:1234/v1",
     callbacks=debug_callbacks,
 )
@@ -60,7 +60,7 @@ prompt = ChatPromptTemplate(
     ],
 )
 
-chain = prompt | remote_chat_model
+chain = prompt | local_chat_model
 
 chain_with_history = RunnableWithMessageHistory(
     chain,
