@@ -1,0 +1,33 @@
+# Basic Modelfile
+
+# An example of a Modelfile creating a mario blueprint:
+
+FROM qwen3:8b
+
+# sets the temperature to 1 [higher is more creative, lower is more coherent]
+
+PARAMETER temperature 0.5
+
+# sets the context window size to 4096, this controls how many tokens the LLM can use as context to generate the next token
+
+# PARAMETER num_ctx 4096
+
+# sets a custom system message to specify the behavior of the chat assistant
+
+SYSTEM You are a coding assistant.
+
+MESSAGE user Hi, how are you doing?
+
+# To use this:
+
+# Save it as a file (e.g. Modelfile)
+
+# ollama create choose-a-model-name -f <location of the file e.g. ./Modelfile>
+
+# ollama run choose-a-model-name
+
+# Start using the model!
+
+# To view the Modelfile of a given model, use the ollama show --modelfile command.
+
+# ollama show --modelfile llama3.2
