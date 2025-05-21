@@ -1,17 +1,3 @@
-# Requirements
-# nltk==3.9.1
-# numpy==1.26.4
-# rank_bm25==0.2.2
-# scikit-learn==1.5.2
-
-import nltk
-from sklearn.feature_extraction.text import TfidfVectorizer
-import numpy as np
-
-nltk.download("punkt")
-
-
-# Sample documents about sailing in Croatia
 documents = [
     "Sailing in Croatia often includes visiting UNESCO World Heritage sites.",
     "The Makarska Riviera is known for its stunning coastline and sailing opportunities.",
@@ -114,16 +100,3 @@ documents = [
     "Many sailors start their Croatian adventure from the city of Zadar.",
     "The coastal town of Makarska is known for its beautiful beaches and lively nightlife.",
 ]
-
-# Tokenize words
-sample_document = documents[0]
-tokenized_words = nltk.word_tokenize(sample_document)
-
-print(tokenized_words)
-
-
-# Tokenize sentences
-sample_document = " ".join(documents[0:2])
-tokenized_sentences = nltk.sent_tokenize(sample_document)
-
-print(tokenized_sentences)
