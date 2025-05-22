@@ -1,7 +1,7 @@
 from sklearn.feature_extraction.text import TfidfVectorizer
 import numpy as np
 
-from text_preprocessing_steps import process_text
+from rag_basics.text_preprocessing import process_text
 from sample_documents import documents
 
 
