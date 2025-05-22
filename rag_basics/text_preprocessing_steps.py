@@ -2,8 +2,11 @@ import nltk
 from sample_documents import documents
 
 
-def process_text(text):
+# A function to process the text which lowercases, tokenizes, removes non-alphanumeric characters and stop words
+def process_text(text: str) -> list[str]:
+
     processed_text = text.lower()
+
     processed_text = nltk.word_tokenize(processed_text)
     processed_text = [word for word in processed_text if word.isalnum()]
 
@@ -13,6 +16,7 @@ def process_text(text):
     return processed_text
 
 
+# Process the documents and join them into a single string
 processed_text = [" ".join(process_text(doc)) for doc in documents]
 
 # print(processed_text)

@@ -1,11 +1,12 @@
 from sklearn.feature_extraction.text import TfidfVectorizer
 import numpy as np
 
-from text_preprocessing_steps import processed_text
+from text_preprocessing_steps import process_text
 from sample_documents import documents
 
 
 # Index the documents with TF-IDF
+processed_text = [" ".join(process_text(doc)) for doc in documents]
 
 vectorizer = TfidfVectorizer()
 
@@ -32,8 +33,8 @@ def search(query, vectorizer, tfidf_matrix):
 
 
 # Sort and display the function
-results = search(query, vectorizer, tfidf_matrix)
-sorted_results = sorted(enumerate(results), key=lambda x: x[1][0], reverse=True)
+search_results = search(query, vectorizer, tfidf_matrix)
+sorted_results = sorted(enumerate(search_results), key=lambda x: x[1][0], reverse=True)
 
 # Iterate through the results and display the documents
 for i, score in enumerate(sorted_results):
