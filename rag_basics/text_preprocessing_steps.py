@@ -15,4 +15,4 @@ def process_text(text):
 
 processed_text = [" ".join(process_text(doc)) for doc in documents]
 
-print(processed_text)
+# print(processed_text)
