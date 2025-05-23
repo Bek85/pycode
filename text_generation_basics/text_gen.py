@@ -11,6 +11,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 import torch
 from torch.utils.data import Dataset, DataLoader
 from torch.nn.utils.rnn import pad_sequence
+from sample_data import data
 
 
 # Initialize the tokenizer and model
@@ -18,6 +19,26 @@ tokenizer = AutoTokenizer.from_pretrained("gpt2")
 model = AutoModelForCausalLM.from_pretrained("gpt2")
 
 prompt = "Dear, boss ... "
+
+# Tokenization
+# All inputs must have the same length
+# Add a dummy token to the end
+# Having the same length => this is called padding
+tokenizer.pad_token = tokenizer.eos_token
+
+# Tokenize the data
+tokenized_data = [
+    tokenizer.encode_plus(
+        sentence,
+        add_special_tokens=True,
+        return_tensors="pt",
+        padding="max_length",
+        max_length=50,
+    )
+    for sentence in data
+]
+
+print(tokenized_data[:2])
 
 
 # Simplified text generation function
@@ -36,4 +57,4 @@ def generate_text(prompt, model, tokenizer, max_length=100):
 
 # Generate text
 generated_text = generate_text(prompt, model, tokenizer)
-print(generated_text)
+# print(generated_text)
