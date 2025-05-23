@@ -38,7 +38,25 @@ tokenized_data = [
     for sentence in data
 ]
 
-print(tokenized_data[:2])
+# print(tokenized_data[:2])
+
+# Isolate the input IDs and attention masks
+input_ids = [item["input_ids"].squeeze() for item in tokenized_data]
+attention_masks = [item["attention_mask"].squeeze() for item in tokenized_data]
+
+# Convert the input IDs and attention masks to tensors
+# This step is necessary for processing the tuned model
+input_ids = torch.tensor(input_ids)
+attention_masks = torch.tensor(attention_masks)
+
+# Padding all sequences to make sure they are the same length
+padded_input_ids = pad_sequence(
+    input_ids, batch_first=True, padding_value=tokenizer.eos_token_id
+)
+
+padded_attention_masks = pad_sequence(
+    attention_masks, batch_first=True, padding_value=0
+)
 
 
 # Simplified text generation function
