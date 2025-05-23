@@ -1,6 +1,5 @@
-from torch.utils.data import Dataset, DataLoader
-from sample_data import data
-from text_gen import tokenizer, padded_input_ids, padded_attention_masks
+from torch.utils.data import Dataset
+from text_gen import padded_input_ids, padded_attention_masks
 
 
 # Create a custom dataset class including data labels
@@ -24,4 +23,4 @@ class TextDataset(Dataset):
 # Apply the class
 dataset = TextDataset(padded_input_ids, padded_attention_masks)
 
-print(dataset[:2])
+# print(dataset[:2])

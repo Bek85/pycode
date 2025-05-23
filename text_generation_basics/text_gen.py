@@ -58,13 +58,26 @@ padded_attention_masks = pad_sequence(
 )
 
 
-# Simplified text generation function
-def generate_text(prompt, model, tokenizer, max_length=100):
-    # Encode the prompt to get input IDs
-    input_ids = tokenizer.encode(prompt, return_tensors="pt")
+# Improved text generation function with proper attention mask
+def generate_text(prompt, model, tokenizer, max_new_tokens=100):
+    # Encode the prompt properly with attention mask
+    encoded = tokenizer.encode_plus(
+        prompt,
+        add_special_tokens=True,
+        return_tensors="pt",
+        truncation=True,
+    )
 
-    # Generate text using the model
-    output = model.generate(input_ids, max_length=100)
+    input_ids = encoded["input_ids"]
+    attention_mask = encoded["attention_mask"]
+
+    # Generate text using the model with attention mask
+    output = model.generate(
+        input_ids=input_ids,
+        attention_mask=attention_mask,
+        max_new_tokens=max_new_tokens,
+        pad_token_id=tokenizer.eos_token_id,
+    )
 
     # Decode the generated text
     generated_text = tokenizer.decode(output[0], skip_special_tokens=True)
