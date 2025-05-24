@@ -38,4 +38,29 @@ for epoch in range(10):
         optimizer.step()
 
         # Print the loss
-        print(f"Epoch {epoch}, Loss: {loss.item()}")
+        # print(f"Epoch {epoch}, Loss: {loss.item()}")
+
+
+def generate_text_with_finetuned_model(prompt, model, tokenizer, max_length=100):
+    # Encode the prompt to get the input_ids
+    inputs = tokenizer.encode_plus(prompt, return_tensors="pt")
+    input_ids = inputs["input_ids"]
+    attention_mask = inputs["attention_mask"]
+
+    # Generate text using the model
+    output = model.generate(
+        input_ids=input_ids, attention_mask=attention_mask, max_length=max_length
+    )
+
+    return tokenizer.decode(output[0], skip_special_tokens=True)
+
+
+# Test the function
+
+prompt = "In this research, we"
+
+generated_text = generate_text_with_finetuned_model(
+    prompt, model, tokenizer, max_length=500
+)
+
+print(generated_text)
