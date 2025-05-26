@@ -43,4 +43,4 @@ generated_answer = generate_text(
     context, question, generative_model, generative_tokenizer
 )
 
-print(generated_answer)
+# print(generated_answer)
