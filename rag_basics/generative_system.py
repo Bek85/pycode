@@ -32,6 +32,11 @@ def generate_text(context, query, model, tokenizer, max_length=100):
         attention_mask=attention_masks,
         max_length=max_length,
         pad_token_id=tokenizer.eos_token_id,
+        temperature=0.1,  # Controls randomness
+        top_k=50,  # Controls diversity
+        top_p=0.8,  # Controls diversity, different from top_k is that top_p is a probability threshold
+        repetition_penalty=1.2,  # Penalizes repetition
+        do_sample=True,  # Sample from the model
     )
 
     # Decode the generated text to a readable format
