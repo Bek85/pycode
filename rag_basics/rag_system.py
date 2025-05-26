@@ -1,21 +1,26 @@
 from retreival_system_with_FAISS import retrieve
-from generative_system import generate_text, generative_model, generative_tokenizer
+from generative_system import generate_text
 from sample_dataset import documents
 import faiss
 from tokenization_embeddings_for_rag import document_embeddings
-from retreival_system_with_FAISS import (
-    tokenizer as retrieval_tokenizer,
-    model as retrieval_model,
-)
+from transformers import AutoTokenizer, AutoModel, AutoModelForCausalLM
 
 # Initialize the tokenizer and model for generation
-gen_tokenizer = generative_tokenizer
-gen_model = generative_model
+gen_tokenizer = AutoTokenizer.from_pretrained("gpt2")
+gen_model = AutoModelForCausalLM.from_pretrained("gpt2")
+
 
 # Initialize the FAISS index
 retrieval_index = faiss.IndexFlatL2(document_embeddings.shape[1])
-
 retrieval_index.add(document_embeddings)
+
+# Initialize the tokenizer and model for retrieval
+retrieval_tokenizer = AutoTokenizer.from_pretrained(
+    "sentence-transformers/paraphrase-MiniLM-L6-v2"
+)
+retrieval_model = AutoModel.from_pretrained(
+    "sentence-transformers/paraphrase-MiniLM-L6-v2"
+)
 
 
 # Define RAG function which integrates retrieval and generation

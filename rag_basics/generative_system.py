@@ -17,30 +17,22 @@ prompt = f"Context: {context} \n Question: {question} \n Answer:"
 
 # Create a function to generate text
 def generate_text(context, query, model, tokenizer, max_length=100):
+    # Format the input text with context and query
+    input_text = f"Context {context}\nQuestion: {query}\nAnswer:"
 
-    # Tokenize the prompt
-    inputs = generative_tokenizer(
-        prompt, return_tensors="pt", padding=True, truncation=True
-    )
+    # Tokenize the input text and prepare tensors for the model
+    inputs = tokenizer(input_text, return_tensors="pt", padding=True, truncation=True)
 
     input_ids = inputs["input_ids"]
+    attention_masks = (input_ids != tokenizer.pad_token_id).long()
 
-    attention_masks = (input_ids != generative_tokenizer.pad_token_id).long()
-
-    outputs = generative_model.generate(
+    # Generate text using the model
+    outputs = model.generate(
         input_ids,
         attention_mask=attention_masks,
-        max_length=100,
-        pad_token_id=generative_tokenizer.eos_token_id,
+        max_length=max_length,
+        pad_token_id=tokenizer.eos_token_id,
     )
 
-    answer = generative_tokenizer.decode(outputs[0], skip_special_tokens=True)
-
-    return answer
-
-
-generated_answer = generate_text(
-    context, question, generative_model, generative_tokenizer
-)
-
-# print(generated_answer)
+    # Decode the generated text to a readable format
+    return tokenizer.decode(outputs[0], skip_special_tokens=True)

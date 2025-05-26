@@ -31,7 +31,7 @@ def retrieve(query, tokenizer, model, index, documents, top_k=3):
 
 
 # Test the retrieval function
-# query = "What is the capital of Germany?"
-# retrieved_documents, distances = retrieve(query, tokenizer, model, index, documents)
+query = "What is the capital of Germany?"
+retrieved_documents, distances = retrieve(query, tokenizer, model, index, documents)
 # print(retrieved_documents)
 # print(distances)
