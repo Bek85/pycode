@@ -4,7 +4,6 @@
 # torch==2.5.1+cu121
 # transformers==4.46.3
 
-import faiss
 import numpy as np
 import torch
 from transformers import AutoTokenizer, AutoModel
@@ -50,4 +49,4 @@ for doc in documents:
 # Concatenate all embeddings into a pytorch tensor, move it to the CPU, and convert to numpy array
 document_embeddings = torch.cat(document_embeddings).cpu().numpy()
 
-print(document_embeddings)
+# print(document_embeddings)
