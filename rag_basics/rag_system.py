@@ -7,6 +7,7 @@ from transformers import AutoTokenizer, AutoModel, AutoModelForCausalLM
 
 # Initialize the tokenizer and model for generation
 gen_tokenizer = AutoTokenizer.from_pretrained("gpt2")
+gen_tokenizer.pad_token = gen_tokenizer.eos_token
 gen_model = AutoModelForCausalLM.from_pretrained("gpt2")
 
 
