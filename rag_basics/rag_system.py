@@ -45,17 +45,37 @@ def rag_pipeline(
 
 
 # Test the RAG pipeline
-query = "What is the capital of Germany?"
+# query = "What is the capital of Germany?"
 
-generated_answer = rag_pipeline(
-    query,
-    retrieval_tokenizer,
-    retrieval_model,
-    retrieval_index,
-    gen_model,
-    gen_tokenizer,
-    documents,
-    top_k=3,
-)
+# generated_answer = rag_pipeline(
+#     query,
+#     retrieval_tokenizer,
+#     retrieval_model,
+#     retrieval_index,
+#     gen_model,
+#     gen_tokenizer,
+#     documents,
+#     top_k=3,
+# )
 
-print(generated_answer)
+# Test the RAG pipeline with multiple queries
+
+queries = [
+    "What is the capital of Germany?",
+    "What is Berlin famous for?",
+    "Who discovered the Americas?",
+    "Who is the most famous person in the world?",
+]
+
+for query in queries:
+    generated_answer = rag_pipeline(
+        query,
+        retrieval_tokenizer,
+        retrieval_model,
+        retrieval_index,
+        gen_model,
+        gen_tokenizer,
+        documents,
+        top_k=3,
+    )
+    print(f"Query: {query}\nAnswer: {generated_answer}\n")
