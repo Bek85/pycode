@@ -13,6 +13,15 @@ file_path = os.path.join(os.getcwd(), "openai", file_name)
 with open(file_path, "rb") as image_file:
     image_base64 = base64.b64encode(image_file.read()).decode("utf-8")
     image_url = f"data:image/jpeg;base64,{image_base64}"
+import base64
+
+file_name = "Thumbnail python FV1.jpg"
+file_path = os.path.join(os.getcwd(), "openai", file_name)
+
+# Read the image and convert to base64
+with open(file_path, "rb") as image_file:
+    image_base64 = base64.b64encode(image_file.read()).decode("utf-8")
+    image_url = f"data:image/jpeg;base64,{image_base64}"
 
 
 # Define the model
