@@ -9,18 +9,18 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 df = pd.DataFrame(
     columns=[
+        "ItemNamePt",
+        "ItemNameEn",
+        "ItemPrice",
+        "ItemDescriptionPt",
+        "ItemDescriptionEn",
+        "Availability",
         "CategoryTitlePt",
         "CategoryTitleEn",
         "SubcategoryTitlePt",
         "SubcategoryTitleEn",
-        "ItemNamePt",
-        "ItemNameEn",
-        "ItemPrice",
         "Calories",
         "PortionSize",
-        "Availability",
-        "ItemDescriptionPt",
-        "ItemDescriptionEn",
     ]
 )
 
@@ -78,3 +78,42 @@ image_files = sorted(
 )
 
 test = image_files[0]
+
+# Retrieve and encode the image
+image_path = os.path.join(IMAGE_DIR, test)
+image_data = encode_image(image_path)
+
+
+# Use GPT-4o to analyze and convert the image
+response = client.chat.completions.create(
+    model=model,
+    messages=[
+        {"role": "system", "content": system_prompt},
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "text": "Convert the menu image to a structured excel sheet format following the provided template and instructions.",
+                },
+                {
+                    "type": "image_url",
+                    "image_url": {"url": f"data:image/png;base64,{image_data}"},
+                },
+            ],
+        },
+    ],
+    temperature=0,
+)
+
+# print(response.choices[0].message.content)
+
+for row in response.choices[0].message.content.split("\n"):
+    if row.startswith("|") and not row.startswith("|---"):
+        columns = [col.strip() for col in row.split("|")[1:-1]]
+        if len(columns) == len(df.columns):
+            new_row = pd.Series(columns, index=df.columns)
+            df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+            print(df)
+        else:
+            print("Skipping row:", row)
