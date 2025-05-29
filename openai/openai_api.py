@@ -4,6 +4,16 @@ url = "https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/Gfp-wisconsin-m
 from openai import OpenAI
 import os
 from IPython.display import Markdown, display
+import base64
+
+file_name = "Thumbnail python FV1.jpg"
+file_path = os.path.join(os.getcwd(), "openai", file_name)
+
+# Read the image and convert to base64
+with open(file_path, "rb") as image_file:
+    image_base64 = base64.b64encode(image_file.read()).decode("utf-8")
+    image_url = f"data:image/jpeg;base64,{image_base64}"
+
 
 # Define the model
 model = "gpt-4o"
@@ -21,6 +31,14 @@ user_content = [
     {"type": "image_url", "image_url": {"url": url, "detail": "high"}},
 ]
 
+user_content2 = [
+    {
+        "type": "text",
+        "text": "This is the image for my thumbnail for my Python for Data Analysis course. Be brutal, mean and provide sarcastic suggestions",
+    },
+    {"type": "image_url", "image_url": {"url": image_url, "detail": "high"}},
+]
+
 
 # Generate text with OpenAI
 response = client.chat.completions.create(
@@ -29,7 +47,7 @@ response = client.chat.completions.create(
         {"role": "system", "content": system_prompt},
         {
             "role": "user",
-            "content": user_content,
+            "content": user_content2,
         },
     ],
 )
