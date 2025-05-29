@@ -12,8 +12,14 @@ model = "gpt-4o"
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # Define the user and system prompt
-system_prompt = "You are Steve Jobs."
-user_prompt = "Describe the image in a way that is helpful for a marketing team to use."
+system_prompt = "You are a helpful assistant."
+user_content = [
+    {
+        "type": "text",
+        "text": "Describe the image.",
+    },
+    {"type": "image_url", "image_url": {"url": url, "detail": "high"}},
+]
 
 
 # Generate text with OpenAI
@@ -23,10 +29,7 @@ response = client.chat.completions.create(
         {"role": "system", "content": system_prompt},
         {
             "role": "user",
-            "content": [
-                {"type": "text", "text": user_prompt},
-                {"type": "image_url", "image_url": {"url": url}},
-            ],
+            "content": user_content,
         },
     ],
 )
