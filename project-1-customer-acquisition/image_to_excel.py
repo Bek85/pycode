@@ -1,9 +1,28 @@
 import os
 from openai import OpenAI
+import base64
+import pandas as pd
 
 model = "gpt-4o"
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+df = pd.DataFrame(
+    columns=[
+        "CategoryTitlePt",
+        "CategoryTitleEn",
+        "SubcategoryTitlePt",
+        "SubcategoryTitleEn",
+        "ItemNamePt",
+        "ItemNameEn",
+        "ItemPrice",
+        "Calories",
+        "PortionSize",
+        "Availability",
+        "ItemDescriptionPt",
+        "ItemDescriptionEn",
+    ]
+)
 
 # Define the system prompt
 system_prompt = """
@@ -40,3 +59,22 @@ Notes:
 - Ensure all data entered follows the specified formats to maintain database integrity.
 - Review the data for accuracy and consistency before submitting the Excel sheet.
 """
+
+# Get the directory named "Dim Sum"
+directory = os.path.join(os.path.dirname(__file__), "Dim Sum")
+
+os.chdir(directory)
+IMAGE_DIR = directory
+
+
+def encode_image(image_path):
+    with open(image_path, "rb") as image_file:
+        return base64.b64encode(image_file.read()).decode("utf-8")
+
+
+# Process each image in the directory
+image_files = sorted(
+    [f for f in os.listdir(IMAGE_DIR) if f.lower().endswith((".png", ".jpg", ".jpeg"))]
+)
+
+test = image_files[0]
