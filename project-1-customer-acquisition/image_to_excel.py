@@ -83,6 +83,9 @@ test = image_files[0]
 image_path = os.path.join(IMAGE_DIR, test)
 image_data = encode_image(image_path)
 
+# Adding a flag for the headers
+headers_added = False
+
 
 # Use GPT-4o to analyze and convert the image
 response = client.chat.completions.create(
@@ -109,11 +112,17 @@ response = client.chat.completions.create(
 # print(response.choices[0].message.content)
 
 for row in response.choices[0].message.content.split("\n"):
-    if row.startswith("|") and not row.startswith("|---"):
+    if row.startswith("|") and not row.startswith(
+        "|-"
+    ):  # Ensure that the data is a row and not a header format
         columns = [col.strip() for col in row.split("|")[1:-1]]
         if len(columns) == len(df.columns):
+            if "CategoryTitlePt" in columns:
+                headers_added = True
+                continue
+            if headers_added and "CategoryTitlePt" in columns:
+                continue  # skip the row
             new_row = pd.Series(columns, index=df.columns)
             df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
-            print(df)
         else:
-            print("Skipping row:", row)
+            print(f"Skipping row { row}")
