@@ -1,28 +1,55 @@
 import os
 from dotenv import load_dotenv
-from langchain.chat_models import init_chat_model
-from langchain.agents import create_openai_functions_agent
-from langchain.prompts import (
-    HumanMessagePromptTemplate,
-    ChatPromptTemplate,
-    MessagesPlaceholder,
-    SystemMessagePromptTemplate,
-)
-from langchain.agents import AgentExecutor
+from langchain_community.chat_models import ChatOpenAI
+from langchain.agents import initialize_agent, AgentType
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_core.chat_history import BaseChatMessageHistory
 from handlers.chat_model_start_handler import ChatModelStartHandler
-from tools.oracle_sql import run_query_tool, list_tables, describe_tables_tool
+from langchain.prompts import (
+    ChatPromptTemplate,
+    SystemMessagePromptTemplate,
+    HumanMessagePromptTemplate,
+    MessagesPlaceholder,
+)
+from langchain.agents import create_react_agent, AgentExecutor
 
-# Load environment variables if needed
+# from langchain.agents import create_react_agent, create_react_agent_prompt
+
+from tools.oracle_sql import run_query, list_tables, describe_tables
+
+
+# Load environment variables
 load_dotenv()
+
+tables = list_tables()
+
 
 handler = ChatModelStartHandler()
 
-llm = init_chat_model("gpt-4o-mini", model_provider="openai", callbacks=[handler])
+llm = ChatOpenAI(
+    model="ProkuraturaAI",  # Local DeepSeek model
+    openai_api_base=os.getenv("OPENAI_API_BASE"),
+    openai_api_key=os.getenv("OPENAI_API_KEY"),
+    temperature=0,
+    callbacks=[handler],
+)
+
+custom_prompt = ChatPromptTemplate.from_messages(
+    [
+        SystemMessagePromptTemplate.from_template(
+            "You are a helpful Oracle database assistant.\n"
+            "Available tools: {tool_names}\n"
+            f"The database has tables: {tables}\n"
+            "Use the 'describe_tables' tool before querying table contents."
+        ),
+        MessagesPlaceholder(variable_name="chat_history"),
+        HumanMessagePromptTemplate.from_template("{input}"),
+        MessagesPlaceholder(variable_name="agent_scratchpad"),
+    ]
+)
 
 
-# Message history class (same as agents.py)
+# Message history class
 class ChatMessageHistory(BaseChatMessageHistory):
     def __init__(self):
         self.messages = []
@@ -38,34 +65,25 @@ class ChatMessageHistory(BaseChatMessageHistory):
 
 
 message_history = ChatMessageHistory()
+tools = [run_query, describe_tables]
 
-tools = [run_query_tool, describe_tables_tool]
-
-tables = list_tables()
-
-prompt = ChatPromptTemplate(
-    messages=[
-        SystemMessagePromptTemplate.from_template(
-            "You are a helpful Oracle database assistant.\n"
-            f"The database has tables of: {tables}\n"
-            "Do not make any assumptions about what tables exist "
-            "or what columns exist. Instead, use the describe_tables function.\n"
-        ),
-        MessagesPlaceholder(variable_name="chat_history"),
-        HumanMessagePromptTemplate.from_template("{input}"),
-        MessagesPlaceholder(variable_name="agent_scratchpad"),
-    ],
-    input_variables=["input"],
+# Build the agent (uses ReAct-style, tool-aware behavior)
+# Create ReAct-style agent using your custom prompt
+react_agent = create_react_agent(
+    llm=llm,
+    tools=tools,
+    prompt=custom_prompt,
 )
-
-agent = create_openai_functions_agent(llm, tools, prompt)
 
 agent_executor = AgentExecutor(
-    agent=agent,
+    agent=react_agent,
     tools=tools,
+    verbose=True,
+    handle_parsing_errors=True,
 )
 
 
+# Attach message history for stateful agent
 def get_message_history(session_id):
     return message_history
 
@@ -78,12 +96,14 @@ runnable_agent = RunnableWithMessageHistory(
 )
 
 
+# Query runner
 def run_query(user_query):
     return runnable_agent.invoke(
         {"input": user_query}, {"configurable": {"session_id": "default"}}
     )
 
 
+# CLI interface
 if __name__ == "__main__":
     while True:
         user_input = input("Enter your query: ")

@@ -1,11 +1,9 @@
-# Oracle connection details are loaded from environment variables (.env)
 import os
 import oracledb
-from langchain.tools import Tool
-from pydantic.v1 import BaseModel
 from typing import List
 from dotenv import load_dotenv
-
+from pydantic import BaseModel, Field
+from langchain_core.tools import tool
 
 load_dotenv()
 
@@ -18,8 +16,7 @@ DSN = f"{ORACLE_HOST}:{ORACLE_PORT}/{ORACLE_SERVICE}"
 
 
 def get_db_connection():
-    conn = oracledb.connect(user=ORACLE_USER, password=ORACLE_PASSWORD, dsn=DSN)
-    return conn
+    return oracledb.connect(user=ORACLE_USER, password=ORACLE_PASSWORD, dsn=DSN)
 
 
 def list_tables():
@@ -32,25 +29,14 @@ def list_tables():
     return "\n".join([row[0] for row in rows if row[0] is not None])
 
 
-def execute_query(query):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    try:
-        cursor.execute(query)
-        if cursor.description:
-            result = cursor.fetchall()
-        else:
-            result = "Query executed."
-        cursor.close()
-        conn.close()
-        return result
-    except Exception as err:
-        cursor.close()
-        conn.close()
-        return f"The following error occurred: {str(err)}"
+# --- TOOL 1: Describe Tables ---
+class DescribeTablesArgs(BaseModel):
+    table_names: List[str] = Field(description="List of Oracle table names")
 
 
-def describe_tables(table_names):
+@tool(args_schema=DescribeTablesArgs)
+def describe_tables(table_names: List[str]) -> str:
+    """Given a list of Oracle table names, return their column names and data types."""
     conn = get_db_connection()
     cursor = conn.cursor()
     output = ""
@@ -70,25 +56,28 @@ def describe_tables(table_names):
     return output
 
 
-class DescribeTablesArgsSchema(BaseModel):
-    table_names: List[str]
+# --- TOOL 2: Run Oracle Query ---
+class RunQueryArgs(BaseModel):
+    query: str = Field(description="The Oracle SQL query to execute")
 
 
-describe_tables_tool = Tool.from_function(
-    name="describe_tables",
-    description="Given a list of table names, return the schema of those tables (Oracle)",
-    func=describe_tables,
-    args_schema=DescribeTablesArgsSchema,
-)
+@tool(args_schema=RunQueryArgs)
+def run_query(query: str) -> str:
+    """Executes an Oracle SQL query and returns the result."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(query)
+        if cursor.description:
+            result = cursor.fetchall()
+            return str(result)
+        else:
+            return "Query executed successfully."
+    except Exception as err:
+        return f"Error occurred: {str(err)}"
+    finally:
+        cursor.close()
+        conn.close()
 
 
-class RunQueryArgsSchema(BaseModel):
-    query: str
-
-
-run_query_tool = Tool.from_function(
-    name="run_oracle_query",
-    description="Run an Oracle SQL query",
-    func=execute_query,
-    args_schema=RunQueryArgsSchema,
-)
+__all__ = ["run_query", "describe_tables", "list_tables"]
