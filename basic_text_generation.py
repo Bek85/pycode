@@ -10,15 +10,20 @@ from openai import OpenAI
 
 load_dotenv()
 
+# client = OpenAI()
+# print(client.models.list())
 
-local_chat_model = ChatOpenAI(
-    model="gemma-3-12b-it-qat",
-    openai_api_base="http://127.0.0.1:1234/v1",
+
+local_chat_model = init_chat_model(
+    model="ProkuraturaAI",
+    model_provider="openai",
+    openai_api_base="http://172.18.35.123:8000/v1",
 )
 
 remote_chat_model = init_chat_model(
-    model="gpt-4o-mini",
+    model="gpt-5",  # chat-completions compatible
     model_provider="openai",
+    # openai_api_base="https://api.openai.com/v1",  # <-- force OpenAI, not local
 )
 
 

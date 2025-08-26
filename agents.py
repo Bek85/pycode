@@ -1,6 +1,6 @@
 from dotenv import load_dotenv
 from langchain.chat_models import init_chat_model
-from langchain.agents import create_openai_functions_agent
+from langchain.agents import create_openai_functions_agent, create_tool_calling_agent
 from langchain.prompts import (
     HumanMessagePromptTemplate,
     ChatPromptTemplate,
@@ -22,6 +22,12 @@ load_dotenv()
 handler = ChatModelStartHandler()
 
 llm = init_chat_model("gpt-4o-mini", model_provider="openai", callbacks=[handler])
+local_llm = init_chat_model(
+    "ProkuraturaAI",
+    model_provider="openai",
+    callbacks=[handler],
+    openai_api_base="http://172.18.35.123:8000/v1",
+)
 
 
 # Instead of using ConversationBufferMemory, use the message history approach
@@ -68,14 +74,25 @@ prompt = ChatPromptTemplate(
     input_variables=["input"],
 )
 
-agent = create_openai_functions_agent(llm, tools, prompt)
+# Create agents for both models
+openai_agent = create_openai_functions_agent(llm, tools, prompt)
+deepseek_agent = create_tool_calling_agent(local_llm, tools, prompt)
 
-# Configure agent executor without memory (we'll handle history differently)
-agent_executor = AgentExecutor(
-    agent=agent,
+# Configure agent executors
+openai_agent_executor = AgentExecutor(
+    agent=openai_agent,
     tools=tools,
     # verbose=True,
 )
+
+deepseek_agent_executor = AgentExecutor(
+    agent=deepseek_agent,
+    tools=tools,
+    # verbose=True,
+)
+
+# Default to deepseek agent
+agent_executor = deepseek_agent_executor
 
 
 # Create a function to get chat history
@@ -83,27 +100,57 @@ def get_message_history(session_id):
     return message_history
 
 
-# Wrap the executor in a RunnableWithMessageHistory
-runnable_agent = RunnableWithMessageHistory(
-    agent_executor,
+# Wrap both executors in RunnableWithMessageHistory
+openai_runnable_agent = RunnableWithMessageHistory(
+    openai_agent_executor,
     get_message_history,
     input_messages_key="input",
     history_messages_key="chat_history",
 )
 
+deepseek_runnable_agent = RunnableWithMessageHistory(
+    deepseek_agent_executor,
+    get_message_history,
+    input_messages_key="input",
+    history_messages_key="chat_history",
+)
 
-def run_query(user_query):
-    return runnable_agent.invoke(
+# Default to deepseek agent
+runnable_agent = deepseek_runnable_agent
+
+
+def run_query(user_query, use_openai=False):
+    """Run query with specified model. Default uses Deepseek, set use_openai=True for GPT-4o-mini"""
+    agent = openai_runnable_agent if use_openai else deepseek_runnable_agent
+    return agent.invoke(
         {"input": user_query}, {"configurable": {"session_id": "default"}}
     )
 
+def run_query_openai(user_query):
+    """Run query with OpenAI GPT-4o-mini model"""
+    return run_query(user_query, use_openai=True)
+
+def run_query_deepseek(user_query):
+    """Run query with local Deepseek model"""
+    return run_query(user_query, use_openai=False)
+
 
 while True:
-    user_input = input("Enter your query: ")
+    user_input = input("Enter your query (or 'openai:' prefix to use GPT-4o-mini): ")
+    
+    # Check if user wants to use OpenAI model
+    use_openai = user_input.startswith("openai:")
+    if use_openai:
+        user_input = user_input[7:].strip()  # Remove 'openai:' prefix
+    
     # Use default query if user input is empty
     user_query = (
         user_input
         or "How many orders are there? Write the result to an html report file."
     )
-    result = run_query(user_query)
+    
+    model_name = "GPT-4o-mini" if use_openai else "Deepseek V3.1"
+    print(f"Using {model_name}...")
+    
+    result = run_query(user_query, use_openai=use_openai)
     print(result["output"])
