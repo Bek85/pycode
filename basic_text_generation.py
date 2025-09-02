@@ -31,20 +31,20 @@ print(result.choices[0].message.content)
 ######################################################################
 # Using LangChain
 
-# local_chat_model = init_chat_model(
+# local_llm = init_chat_model(
 #     model=local_model_name,
 #     model_provider="openai",
 #     openai_api_base="http://172.18.35.123:8000/v1",
 # )
 
-# remote_chat_model = init_chat_model(
+# remote_llm = init_chat_model(
 #     model=remote_model_name,
 #     model_provider="openai",
 # )
 
 # user_input = input("Enter a prompt: ")
 
-# result = local_chat_model.invoke(user_input)
+# result = local_llm.invoke(user_input)
 
 # print(result.content)
 ######################################################################
