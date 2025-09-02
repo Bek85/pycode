@@ -1,9 +1,10 @@
 import os
 from dotenv import load_dotenv
-from langchain_openai import OpenAI # new import syntax for OpenAI
+from langchain.chat_models import init_chat_model
+from langchain_core.runnables import RunnablePassthrough
+from openai import OpenAI
 from langchain.prompts import PromptTemplate
 import argparse
-from langchain_core.runnables import RunnablePassthrough
 
 
 parser = argparse.ArgumentParser()
@@ -13,12 +14,33 @@ parser.add_argument("--extension", type=str, default="py")
 args = parser.parse_args()
 
 
+local_model_name = "ProkuraturaAI"
+remote_model_name = "gpt-4o-mini"
+
+######################################################################
+
+
 # Load environment variables from .env file
 load_dotenv()
 
-# Get API key from environment variable
-# There is no need to pass the api key as a parameter as it is already loaded in load_dotenv() function call
-llm = OpenAI(openai_api_key=os.getenv("OPENAI_API_KEY"))
+
+######################################################################
+# LangChain
+
+local_llm = init_chat_model(
+    model=local_model_name,
+    model_provider="openai",
+    openai_api_base="http://172.18.35.123:8000/v1",  # with base_url, you can override the default base url (https://api.openai.com/v1)
+)
+
+remote_llm = init_chat_model(
+    model=remote_model_name,
+    model_provider="openai",
+)
+
+language = input("Enter the programming language: ")
+task = input("Enter the task description: ")
+
 
 code_prompt = PromptTemplate(
     template="""
@@ -39,20 +61,21 @@ test_prompt = PromptTemplate(
 chain = (
     RunnablePassthrough()
     .assign(
-        code=lambda x: (code_prompt | llm).invoke(
+        code=lambda x: (code_prompt | local_llm).invoke(
             {"language": x["language"], "task": x["task"]}
         )
     )
     .assign(
-        test=lambda x: (test_prompt | llm).invoke(
+        test=lambda x: (test_prompt | local_llm).invoke(
             {"language": x["language"], "code": x["code"]}
         )
     )
 )
 
 # Invoke the chain
-response = chain.invoke({"language": args.language, "task": args.task})
-
+response = chain.invoke(
+    {"language": language or args.language, "task": task or args.task}
+)
 
 
 print(">>>>>>>>>> GENERATED CODE <<<<<<<<<<")
