@@ -1,34 +1,50 @@
 from dotenv import load_dotenv
-from langchain_openai import ChatOpenAI
 from langchain.chat_models import init_chat_model
-
-# from langchain_openai import (
-#     OpenAI,
-# )  # new import syntax for OpenAI. With this import, you can not specify the model name and other parameters
-
-from openai import OpenAI
+import os
+from openai import OpenAI  # OpenAI SDK
 
 load_dotenv()
 
-# client = OpenAI()
+local_model_name = "ProkuraturaAI"  # local model name
+remote_model_name = "gpt-4o-mini"  # remote model name
+
+
+######################################################################
+# Using OpenAI SDK
+client = OpenAI(
+    base_url="http://172.18.35.123:8000/v1",  # with base_url, you can override the default base url (https://api.openai.com/v1)
+    api_key=os.getenv("OPENAI_API_KEY"),
+)
 # print(client.models.list())
-
-
-local_chat_model = init_chat_model(
-    model="ProkuraturaAI",
-    model_provider="openai",
-    openai_api_base="http://172.18.35.123:8000/v1",
-)
-
-remote_chat_model = init_chat_model(
-    model="gpt-5",  # chat-completions compatible
-    model_provider="openai",
-    # openai_api_base="https://api.openai.com/v1",  # <-- force OpenAI, not local
-)
-
 
 user_input = input("Enter a prompt: ")
 
-result = local_chat_model.invoke(user_input)
+result = client.chat.completions.create(
+    model=local_model_name,
+    messages=[{"role": "user", "content": user_input}],
+)
+print(result.choices[0].message.content)
 
-print(result.content)
+######################################################################
+
+
+######################################################################
+# Using LangChain
+
+# local_chat_model = init_chat_model(
+#     model=local_model_name,
+#     model_provider="openai",
+#     openai_api_base="http://172.18.35.123:8000/v1",
+# )
+
+# remote_chat_model = init_chat_model(
+#     model=remote_model_name,
+#     model_provider="openai",
+# )
+
+# user_input = input("Enter a prompt: ")
+
+# result = local_chat_model.invoke(user_input)
+
+# print(result.content)
+######################################################################
