@@ -4,7 +4,7 @@ from langchain_community.chat_models import ChatOpenAI
 from langchain.agents import initialize_agent, AgentType
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_core.chat_history import BaseChatMessageHistory
-from handlers.chat_model_start_handler import ChatModelStartHandler
+from ..handlers.chat_model_start_handler import ChatModelStartHandler
 from langchain.prompts import (
     ChatPromptTemplate,
     SystemMessagePromptTemplate,

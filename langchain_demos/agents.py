@@ -8,12 +8,12 @@ from langchain.prompts import (
     SystemMessagePromptTemplate,
 )
 from langchain.agents import AgentExecutor
-from tools.sql import run_query_tool, list_tables, describe_tables, describe_tables_tool
-from tools.report import generate_report_tool
+from ..tools.sql import run_query_tool, list_tables, describe_tables, describe_tables_tool
+from ..tools.report import generate_report_tool
 import langchain
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_core.chat_history import BaseChatMessageHistory
-from handlers.chat_model_start_handler import ChatModelStartHandler
+from ..handlers.chat_model_start_handler import ChatModelStartHandler
 
 # langchain.debug = True
 
