@@ -1,7 +1,12 @@
 from dotenv import load_dotenv
 from langchain.prompts import PromptTemplate
 from langchain.chat_models import init_chat_model
-from langchain_core.runnables import RunnableParallel, RunnablePassthrough
+from langchain_core.runnables import (
+    RunnableParallel,
+    RunnablePassthrough,
+    RunnableLambda,
+)
+from langchain_core.output_parsers import StrOutputParser
 import argparse
 from operator import itemgetter
 
@@ -10,8 +15,9 @@ parser.add_argument("--language", type=str, default="python")
 parser.add_argument("--task", type=str, default="return the sum of two numbers")
 args = parser.parse_args()
 
-
 load_dotenv()
+
+output_parser = StrOutputParser()
 
 llm = init_chat_model("gpt-4o-mini", model_provider="openai")
 
@@ -20,7 +26,7 @@ code_prompt = PromptTemplate(
     You are a code generator.
     You are given a task to generate function for {language} that will {task}.
     """,
-    input_variables=["language", "task"]
+    input_variables=["language", "task"],
 )
 
 test_prompt = PromptTemplate(
@@ -31,7 +37,7 @@ test_prompt = PromptTemplate(
     {content}
 
     Generate comprehensive unit tests for this code.
-    """
+    """,
 )
 
 # Get user input for language and task
@@ -42,37 +48,33 @@ task = input("Enter the task description: ")
 final_language = language or args.language
 final_task = task or args.task
 
+code_chain = code_prompt | llm | output_parser
+test_chain = test_prompt | llm | output_parser
+
+
+# Helper function to map code to content for test chain
+def map_code_to_content(data):
+    return {"language": data["language"], "content": data["code"]}
+
+
 # Create a chain that combines code generation and test generation
 chain = (
-    RunnableParallel({
-        "language": lambda x: x["language"],
-        "task": lambda x: x["task"]
-    })
-    | RunnableParallel({
-        "code": code_prompt | llm,
-        "language": lambda x: x["language"]
-    })
-    | RunnableParallel({
-        "code": lambda x: x["code"],
-        "test": lambda x: (test_prompt | llm).invoke({
-            "language": x["language"],
-            "content": x["code"].content
-        })
-    })
+    # Step 1: Generate code (keeps original inputs + adds code)
+    RunnablePassthrough.assign(code=code_chain)
+    |
+    # Step 2: Generate tests (keeps everything + adds test)
+    RunnablePassthrough.assign(test=RunnableLambda(map_code_to_content) | test_chain)
 )
 
 # Invoke the chain with the inputs
-result = chain.invoke({
-    "language": final_language,
-    "task": final_task
-})
+result = chain.invoke({"language": final_language, "task": final_task})
 
 # Format and print the output
 print("\nGenerated Code:")
 print("=" * 50)
-print(result["code"].content.strip())
+print(result["code"])
 
 print("\nGenerated Tests:")
 print("=" * 50)
-print(result["test"].content.strip())
+print(result["test"])
 print("=" * 50)
