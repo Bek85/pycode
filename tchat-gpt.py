@@ -1,4 +1,8 @@
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_core.prompts import (
+    ChatPromptTemplate,
+    MessagesPlaceholder,
+    HumanMessagePromptTemplate,
+)
 from langchain_core.messages import SystemMessage
 from langchain.chat_models import init_chat_model
 from langchain_core.runnables import RunnableWithMessageHistory
@@ -16,18 +20,36 @@ local_llm = init_chat_model(
     openai_api_base="http://172.18.35.123:8000/v1",
 )
 
+# remote_llm = init_chat_model(
+#   model=remote_model_name
+#   model_provider="openai"
+# )
+
 
 def get_chat_history(session_id: str) -> FileChatMessageHistory:
     return FileChatMessageHistory(file_path=f"chat_history_{session_id}.json")
 
 
+# Modern style (recommended)
+# ? Mixed approach - tuples for regular messages, explicit class for placeholder
 prompt = ChatPromptTemplate.from_messages(
     [
-        SystemMessage(content="You are a helpful AI assistant."),
-        MessagesPlaceholder(variable_name="chat_history"),
-        ("human", "{content}"),
+        ("system", "You are a helpful assistant"),  # ✅ Tuple syntax
+        MessagesPlaceholder(variable_name="chat_history"),  # ✅ Must use explicit class
+        ("human", "{content}"),  # ✅ Tuple syntax
     ]
 )
+
+
+# Older style (still valid)
+# Using explicit template classes (verbose)
+# prompt = ChatPromptTemplate.from_messages(
+#     [
+#         SystemMessage(content="You are a helpful AI assistant."),
+#         MessagesPlaceholder(variable_name="chat_history"),
+#         HumanMessagePromptTemplate.from_template("{content}"),
+#     ]
+# )
 
 chain = prompt | local_llm
 
