@@ -1,6 +1,14 @@
 from dotenv import load_dotenv
 from langchain_openai import OpenAIEmbeddings, ChatOpenAI
-from langchain.chat_models import init_chat_model
+# Handle both direct execution and module import
+try:
+    from ..config import get_llm
+except ImportError:
+    # Fallback for direct execution
+    import sys
+    import os
+    sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    from config import get_llm
 from langchain_chroma import Chroma
 from langchain.chains import RetrievalQA
 from redundant_filter_retriever import RedundantFilterRetriever
@@ -12,7 +20,7 @@ langchain.debug = True
 load_dotenv()
 
 # Initialize the LLM
-llm = init_chat_model("gpt-4o-mini", model_provider="openai")
+llm = get_llm("remote")
 
 # Initialize the embeddings
 embeddings = OpenAIEmbeddings()

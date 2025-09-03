@@ -1,5 +1,15 @@
 from dotenv import load_dotenv
-from langchain.chat_models import init_chat_model
+
+# Handle both direct execution and module import
+try:
+    from ..config import get_llm
+except ImportError:
+    # Fallback for direct execution
+    import sys
+    import os
+
+    sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    from config import get_llm
 from langchain.agents import create_openai_functions_agent, create_tool_calling_agent
 from langchain.prompts import (
     HumanMessagePromptTemplate,
@@ -8,7 +18,12 @@ from langchain.prompts import (
     SystemMessagePromptTemplate,
 )
 from langchain.agents import AgentExecutor
-from ..tools.sql import run_query_tool, list_tables, describe_tables, describe_tables_tool
+from ..tools.sql import (
+    run_query_tool,
+    list_tables,
+    describe_tables,
+    describe_tables_tool,
+)
 from ..tools.report import generate_report_tool
 import langchain
 from langchain_core.runnables.history import RunnableWithMessageHistory
@@ -21,13 +36,9 @@ load_dotenv()
 
 handler = ChatModelStartHandler()
 
-llm = init_chat_model("gpt-4o-mini", model_provider="openai", callbacks=[handler])
-local_llm = init_chat_model(
-    "ProkuraturaAI",
-    model_provider="openai",
-    callbacks=[handler],
-    openai_api_base="http://172.18.35.123:8000/v1",
-)
+llm = get_llm("remote")
+# Note: callbacks need to be added separately if needed
+# llm = llm.with_callbacks([handler])
 
 
 # Instead of using ConversationBufferMemory, use the message history approach
@@ -126,9 +137,11 @@ def run_query(user_query, use_openai=False):
         {"input": user_query}, {"configurable": {"session_id": "default"}}
     )
 
+
 def run_query_openai(user_query):
     """Run query with OpenAI GPT-4o-mini model"""
     return run_query(user_query, use_openai=True)
+
 
 def run_query_deepseek(user_query):
     """Run query with local Deepseek model"""
@@ -137,20 +150,20 @@ def run_query_deepseek(user_query):
 
 while True:
     user_input = input("Enter your query (or 'openai:' prefix to use GPT-4o-mini): ")
-    
+
     # Check if user wants to use OpenAI model
     use_openai = user_input.startswith("openai:")
     if use_openai:
         user_input = user_input[7:].strip()  # Remove 'openai:' prefix
-    
+
     # Use default query if user input is empty
     user_query = (
         user_input
         or "How many orders are there? Write the result to an html report file."
     )
-    
+
     model_name = "GPT-4o-mini" if use_openai else "Deepseek V3.1"
     print(f"Using {model_name}...")
-    
+
     result = run_query(user_query, use_openai=use_openai)
     print(result["output"])

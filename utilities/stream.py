@@ -1,6 +1,14 @@
 from uuid import UUID
 from dotenv import load_dotenv
-from langchain.chat_models import init_chat_model
+# Handle both direct execution and module import
+try:
+    from ..config import get_llm
+except ImportError:
+    # Fallback for direct execution
+    import sys
+    import os
+    sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    from config import get_llm
 from langchain.prompts import ChatPromptTemplate
 from langchain.callbacks.base import BaseCallbackHandler
 import time
@@ -17,9 +25,10 @@ class StreamHandler(BaseCallbackHandler):
         pass
 
 
-llm = init_chat_model(
-    "gpt-4o-mini", model_provider="openai", streaming=True, callbacks=[StreamHandler()]
-)
+# Note: streaming and callbacks need to be configured separately when using get_llm
+llm = get_llm("remote")
+# llm = llm.with_callbacks([StreamHandler()])
+# For streaming, you may need to configure the model appropriately
 
 prompt = ChatPromptTemplate.from_messages(
     [

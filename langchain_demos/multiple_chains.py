@@ -1,6 +1,14 @@
 from dotenv import load_dotenv
 from langchain.prompts import PromptTemplate
-from langchain.chat_models import init_chat_model
+# Handle both direct execution and module import
+try:
+    from ..config import get_llm
+except ImportError:
+    # Fallback for direct execution
+    import sys
+    import os
+    sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    from config import get_llm
 from langchain_core.runnables import (
     RunnableParallel,
     RunnablePassthrough,
@@ -19,7 +27,7 @@ load_dotenv()
 
 output_parser = StrOutputParser()
 
-llm = init_chat_model("gpt-4o-mini", model_provider="openai")
+llm = get_llm("remote")
 
 code_prompt = PromptTemplate(
     template="""

@@ -1,12 +1,13 @@
 from dotenv import load_dotenv
-from langchain.chat_models import init_chat_model
+from ..config import get_llm  # Commented out as this file uses OpenAI SDK instead
 import os
 from openai import OpenAI  # OpenAI SDK
 
 load_dotenv()
 
-local_model_name = "ProkuraturaAI"  # local model name
-remote_model_name = "gpt-4o-mini"  # remote model name
+# Model names now handled by config if using LangChain
+local_model_name = "ProkuraturaAI"  # local model name for OpenAI SDK
+remote_model_name = "gpt-4o-mini"  # remote model name for OpenAI SDK
 
 
 ######################################################################
@@ -31,20 +32,11 @@ print(result.choices[0].message.content)
 ######################################################################
 # Using LangChain
 
-# local_llm = init_chat_model(
-#     model=local_model_name,
-#     model_provider="openai",
-#     openai_api_base="http://172.18.35.123:8000/v1",
-# )
-
-# remote_llm = init_chat_model(
-#     model=remote_model_name,
-#     model_provider="openai",
-# )
+# llm = get_llm("local")
 
 # user_input = input("Enter a prompt: ")
 
-# result = local_llm.invoke(user_input)
+# result = llm.invoke(user_input)
 
 # print(result.content)
 ######################################################################

@@ -1,6 +1,7 @@
 from dotenv import load_dotenv
 from langchain.prompts import PromptTemplate
-from langchain.chat_models import init_chat_model
+
+from ..config import get_llm  # Commented out as this file uses OpenAI SDK instead
 from openai import OpenAI
 import argparse
 import os
@@ -14,8 +15,9 @@ args = parser.parse_args()
 load_dotenv()
 
 
+# Model names now handled by config if using LangChain
 local_model_name = "ProkuraturaAI"
-remote_model_name = "gpt-4o-mini"
+# remote_model_name = "gpt-4o-mini"
 
 ######################################################################
 
@@ -43,16 +45,7 @@ print(result.choices[0].message.content)
 ######################################################################
 # # Using LangChain
 
-# local_llm = init_chat_model(
-#     model=local_model_name,
-#     model_provider="openai",
-#     openai_api_base="http://172.18.35.123:8000/v1",
-# )
-
-# remote_llm = init_chat_model(
-#     model=remote_model_name,
-#     model_provider="openai",
-# )
+# llm = get_llm("local")
 
 # code_prompt = PromptTemplate(
 #     template="""
@@ -67,7 +60,7 @@ print(result.choices[0].message.content)
 # task = input("Enter the task description: ")
 
 # # Create a chain
-# chain = code_prompt | remote_llm | StrOutputParser()
+# chain = code_prompt | llm | StrOutputParser()
 
 # # Invoke the chain
 # result = chain.invoke(

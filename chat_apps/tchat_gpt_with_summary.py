@@ -4,7 +4,17 @@ from langchain.prompts import (
     MessagesPlaceholder,
 )
 from langchain_core.messages import SystemMessage, BaseMessage
-from langchain.chat_models import init_chat_model
+
+# Handle both direct execution and module import
+try:
+    from ..config import get_llm
+except ImportError:
+    # Fallback for direct execution
+    import sys
+    import os
+
+    sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    from config import get_llm
 from langchain_core.runnables import RunnableWithMessageHistory
 from langchain_core.chat_history import BaseChatMessageHistory
 from langchain_core.output_parsers import StrOutputParser
@@ -19,7 +29,7 @@ load_dotenv()
 
 
 # Initialize the chat model first
-chat_model = init_chat_model(model="gpt-4o-mini", model_provider="openai")
+llm = get_llm("remote")
 
 
 class DebugCallbackHandler(BaseCallbackHandler):
@@ -28,7 +38,7 @@ class DebugCallbackHandler(BaseCallbackHandler):
 
     def on_llm_start(self, serialized, messages, **kwargs):
         print("\n========= Final LLM Input =========")
-        token_count = sum(chat_model.get_num_tokens(str(msg)) for msg in messages)
+        token_count = sum(llm.get_num_tokens(str(msg)) for msg in messages)
         print(f"Token count: {token_count}")
         print(f"Number of messages: {len(messages)}")
         print("\nActual content being sent to LLM:")
@@ -51,7 +61,7 @@ class DebugCallbackHandler(BaseCallbackHandler):
             if history_messages:
                 print(f"\nChat History ({len(history_messages)} messages):")
                 total_tokens = sum(
-                    chat_model.get_num_tokens(msg.content) for msg in history_messages
+                    llm.get_num_tokens(msg.content) for msg in history_messages
                 )
                 print(f"Total history tokens: {total_tokens}")
                 for msg in history_messages:
@@ -70,9 +80,9 @@ DEBUG_MODE = True
 debug_callbacks = [DebugCallbackHandler()] if DEBUG_MODE else []
 
 # Update the chat model with callbacks
-chat_model = init_chat_model(
-    model="gpt-4o-mini", model_provider="openai", callbacks=debug_callbacks
-)
+llm = get_llm("remote")
+# Note: callbacks need to be added separately if needed
+# llm = llm.with_callbacks(debug_callbacks)
 
 
 # Create a custom message history class
@@ -96,9 +106,7 @@ class SummarizingMessageHistory(BaseChatMessageHistory):
     async def get_messages_for_llm(self) -> List[BaseMessage]:
         """Return messages for LLM, with summarization if needed"""
         # Calculate token count for all messages
-        total_tokens = sum(
-            chat_model.get_num_tokens(msg.content) for msg in self.messages
-        )
+        total_tokens = sum(llm.get_num_tokens(msg.content) for msg in self.messages)
 
         print(f"\n=== Message History Stats ===")
         print(f"Number of messages: {len(self.messages)}")
@@ -141,7 +149,7 @@ Summary:""",
             )
 
             # Create chain for summarization
-            summarize_chain = summarize_prompt | chat_model | StrOutputParser()
+            summarize_chain = summarize_prompt | llm | StrOutputParser()
 
             # Generate summary
             print("Generating summary...")
@@ -189,7 +197,7 @@ prompt = ChatPromptTemplate(
 )
 
 # Create basic chain
-chain = prompt | chat_model
+chain = prompt | llm
 
 
 class SummarizingChainWithHistory(RunnableWithMessageHistory):

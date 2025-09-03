@@ -3,8 +3,16 @@ from langchain.prompts import (
     ChatPromptTemplate,
     MessagesPlaceholder,
 )
-from langchain_openai import ChatOpenAI
-from langchain.chat_models import init_chat_model
+
+# Handle both direct execution and module import
+try:
+    from ..config import get_llm
+except ImportError:
+    # Fallback for direct execution
+    import sys
+    import os
+    sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    from config import get_llm
 from langchain_core.runnables import RunnableWithMessageHistory
 from langchain_community.chat_message_histories import ChatMessageHistory
 from langchain_core.callbacks import BaseCallbackHandler
@@ -31,17 +39,9 @@ DEBUG_MODE = True
 debug_callbacks = [DebugCallbackHandler()] if DEBUG_MODE else []
 
 # Initialize ChatOpenAI model with remote model from openai
-remote_chat_model = init_chat_model(
-    model="gpt-4o-mini", model_provider="openai", callbacks=debug_callbacks
-)
-
-
-# Initialize ChatOpenAI with local model
-local_chat_model = ChatOpenAI(
-    model="gemma-3-12b-it-qat",
-    openai_api_base="http://127.0.0.1:1234/v1",
-    callbacks=debug_callbacks,
-)
+llm = get_llm("remote")
+# Note: callbacks need to be added separately if needed
+# remote_chat_model = remote_chat_model.with_callbacks(debug_callbacks)
 
 
 # Create an in-memory message history
@@ -60,7 +60,7 @@ prompt = ChatPromptTemplate(
     ],
 )
 
-chain = prompt | local_chat_model
+chain = prompt | llm
 
 chain_with_history = RunnableWithMessageHistory(
     chain,

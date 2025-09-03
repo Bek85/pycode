@@ -1,0 +1,3 @@
+[console_scripts]
+pycode-agents = pycode.langchain_demos.agents:main
+pycode-chat = pycode.chat_apps.tchat_gpt:main

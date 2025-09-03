@@ -4,7 +4,15 @@ from langchain.prompts import (
     MessagesPlaceholder,
 )
 from langchain_core.messages import SystemMessage, BaseMessage
-from langchain.chat_models import init_chat_model
+# Handle both direct execution and module import
+try:
+    from ..config import get_llm
+except ImportError:
+    # Fallback for direct execution
+    import sys
+    import os
+    sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    from config import get_llm
 from langchain_core.runnables import RunnableWithMessageHistory
 from langchain_core.chat_history import BaseChatMessageHistory
 from langchain_core.output_parsers import StrOutputParser
@@ -26,7 +34,7 @@ class SummarizingMessageHistory(BaseChatMessageHistory):
         self.max_tokens = max_tokens
         self.current_summary = None
         self._summarized_messages = None  # Cache for summarized messages
-        self.chat_model = init_chat_model(model="gpt-4o-mini", model_provider="openai")
+        self.chat_model = get_llm("remote")
 
     def add_message(self, message: BaseMessage) -> None:
         """Add a message to the history."""
@@ -162,7 +170,7 @@ def get_chat_history(session_id: str) -> BaseChatMessageHistory:
 
 
 # Initialize the chat model
-chat_model = init_chat_model(model="gpt-4o-mini", model_provider="openai")
+llm = get_llm("remote")
 
 
 # Setup prompt template
@@ -175,7 +183,7 @@ prompt = ChatPromptTemplate(
 )
 
 # Create basic chain
-chain = prompt | chat_model
+chain = prompt | llm
 
 
 # Create the custom chain with history that uses summarization

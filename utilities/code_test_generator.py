@@ -1,6 +1,14 @@
 import os
 from dotenv import load_dotenv
-from langchain.chat_models import init_chat_model
+# Handle both direct execution and module import
+try:
+    from ..config import get_llm
+except ImportError:
+    # Fallback for direct execution
+    import sys
+    import os
+    sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    from config import get_llm
 from langchain_core.runnables import RunnablePassthrough
 from openai import OpenAI
 from langchain.prompts import PromptTemplate
@@ -14,8 +22,7 @@ parser.add_argument("--extension", type=str, default="py")
 args = parser.parse_args()
 
 
-local_model_name = "ProkuraturaAI"
-remote_model_name = "gpt-4o-mini"
+# Model names now handled by config
 
 ######################################################################
 
@@ -27,16 +34,9 @@ load_dotenv()
 ######################################################################
 # LangChain
 
-local_llm = init_chat_model(
-    model=local_model_name,
-    model_provider="openai",
-    openai_api_base="http://172.18.35.123:8000/v1",  # with base_url, you can override the default base url (https://api.openai.com/v1)
-)
+local_llm = get_llm("local")
 
-remote_llm = init_chat_model(
-    model=remote_model_name,
-    model_provider="openai",
-)
+remote_llm = get_llm("remote")
 
 language = input("Enter the programming language: ")
 task = input("Enter the task description: ")

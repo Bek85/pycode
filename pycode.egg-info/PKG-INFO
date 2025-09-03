@@ -1,0 +1,389 @@
+Metadata-Version: 2.4
+Name: pycode
+Version: 1.0.0
+Summary: A collection of Python applications demonstrating AI/ML concepts and LangChain integrations
+Home-page: https://github.com/alex/pycode
+Author: Alex
+Author-email: alex@example.com
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: aiohappyeyeballs==2.6.1
+Requires-Dist: aiohttp==3.11.18
+Requires-Dist: aiosignal==1.3.2
+Requires-Dist: altair==5.5.0
+Requires-Dist: annotated-types==0.7.0
+Requires-Dist: anyio==4.9.0
+Requires-Dist: attrs==25.3.0
+Requires-Dist: blinker==1.9.0
+Requires-Dist: cachetools==5.5.2
+Requires-Dist: certifi==2025.4.26
+Requires-Dist: charset-normalizer==3.4.1
+Requires-Dist: click==8.1.8
+Requires-Dist: colorama==0.4.6
+Requires-Dist: dataclasses-json==0.6.7
+Requires-Dist: distro==1.9.0
+Requires-Dist: dotenv==0.9.9
+Requires-Dist: frozenlist==1.6.0
+Requires-Dist: gitdb==4.0.12
+Requires-Dist: GitPython==3.1.44
+Requires-Dist: greenlet==3.2.1
+Requires-Dist: h11==0.16.0
+Requires-Dist: httpcore==1.0.9
+Requires-Dist: httpx==0.28.1
+Requires-Dist: httpx-sse==0.4.0
+Requires-Dist: idna==3.10
+Requires-Dist: Jinja2==3.1.6
+Requires-Dist: jiter==0.9.0
+Requires-Dist: jsonpatch==1.33
+Requires-Dist: jsonpointer==3.0.0
+Requires-Dist: jsonschema==4.23.0
+Requires-Dist: jsonschema-specifications==2025.4.1
+Requires-Dist: langchain==0.3.24
+Requires-Dist: langchain-community==0.3.23
+Requires-Dist: langchain-core==0.3.56
+Requires-Dist: langchain-openai==0.3.14
+Requires-Dist: langchain-text-splitters==0.3.8
+Requires-Dist: langsmith==0.3.38
+Requires-Dist: markdown-it-py==3.0.0
+Requires-Dist: MarkupSafe==3.0.2
+Requires-Dist: marshmallow==3.26.1
+Requires-Dist: mdurl==0.1.2
+Requires-Dist: multidict==6.4.3
+Requires-Dist: mypy_extensions==1.1.0
+Requires-Dist: narwhals==1.37.1
+Requires-Dist: numpy==2.2.5
+Requires-Dist: openai==1.76.0
+Requires-Dist: orjson==3.10.17
+Requires-Dist: packaging==24.2
+Requires-Dist: pandas==2.2.3
+Requires-Dist: pillow==11.2.1
+Requires-Dist: propcache==0.3.1
+Requires-Dist: protobuf==5.29.4
+Requires-Dist: pyarrow==20.0.0
+Requires-Dist: pyboxen==1.3.0
+Requires-Dist: pydantic==2.11.3
+Requires-Dist: pydantic-settings==2.9.1
+Requires-Dist: pydantic_core==2.33.1
+Requires-Dist: pydeck==0.9.1
+Requires-Dist: Pygments==2.19.1
+Requires-Dist: python-dateutil==2.9.0.post0
+Requires-Dist: python-dotenv==1.1.0
+Requires-Dist: pytz==2025.2
+Requires-Dist: PyYAML==6.0.2
+Requires-Dist: referencing==0.36.2
+Requires-Dist: regex==2024.11.6
+Requires-Dist: requests==2.32.3
+Requires-Dist: requests-toolbelt==1.0.0
+Requires-Dist: rich==14.0.0
+Requires-Dist: rpds-py==0.24.0
+Requires-Dist: six==1.17.0
+Requires-Dist: smmap==5.0.2
+Requires-Dist: sniffio==1.3.1
+Requires-Dist: SQLAlchemy==2.0.40
+Requires-Dist: streamlit==1.44.1
+Requires-Dist: tenacity==9.1.2
+Requires-Dist: tiktoken==0.9.0
+Requires-Dist: toml==0.10.2
+Requires-Dist: tornado==6.4.2
+Requires-Dist: tqdm==4.67.1
+Requires-Dist: typing-inspect==0.9.0
+Requires-Dist: typing-inspection==0.4.0
+Requires-Dist: typing_extensions==4.13.2
+Requires-Dist: tzdata==2025.2
+Requires-Dist: urllib3==2.4.0
+Requires-Dist: watchdog==6.0.0
+Requires-Dist: yarl==1.20.0
+Requires-Dist: zstandard==0.23.0
+Provides-Extra: dev
+Requires-Dist: pytest>=6.0; extra == "dev"
+Requires-Dist: black>=21.0; extra == "dev"
+Requires-Dist: flake8>=3.8; extra == "dev"
+Requires-Dist: mypy>=0.910; extra == "dev"
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: provides-extra
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
+
+# PyCode - AI & LangChain Learning Project
+
+A comprehensive collection of Python applications demonstrating AI/ML concepts, LangChain integrations, and conversational AI implementations.
+
+## 📁 Project Structure
+
+```
+pycode/
+├── 📦 chat_apps/           # Chat and conversation applications
+│   ├── tchat_gpt.py                    # Chat with file-based history
+│   ├── tchat_gpt_in_memory.py          # Chat with in-memory history  
+│   ├── tchat_gpt_with_summary.py       # Chat with conversation summarization
+│   ├── tchat_gpt_with_summary_final.py # Enhanced summarization chat
+│   └── tchat_gpt_with_summary_test.py  # Test version with debug features
+├── 📦 langchain_demos/     # LangChain learning examples
+│   ├── agents.py                       # LangChain agents with SQL tools
+│   ├── basic_chain.py                  # Basic LangChain chain examples
+│   ├── basic_text_generation.py       # Simple text generation demos
+│   ├── multiple_chains.py              # Chain orchestration examples
+│   ├── multiple_chains_alternative.py  # Alternative chain implementations
+│   └── oracle_agents.py               # Oracle-specific agent examples
+├── 📦 api_integrations/    # Third-party API integrations
+│   ├── ollama_api.py                   # Ollama API integration
+│   ├── ollama_api_with_openai_sdk.py   # Ollama with OpenAI SDK
+│   ├── ollama_chat.py                  # Ollama chat interface
+│   └── whisper.py                      # OpenAI Whisper integration
+├── 📦 utilities/           # Helper scripts and utilities
+│   ├── code_test_generator.py          # Generate code and tests
+│   ├── facts.py                        # Facts processing utilities
+│   ├── prompt.py                       # Prompt engineering utilities
+│   ├── stream.py                       # Streaming functionality
+│   └── redundant_filter_retriever.py   # Retrieval filtering
+├── 📦 config/              # Centralized configuration
+│   ├── __init__.py
+│   └── models.py                       # LLM model configurations
+├── 🛠️ tools/               # Custom LangChain tools
+├── 🔧 handlers/            # Custom callback handlers
+└── 📊 Various data files and notebooks
+```
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- **Python 3.8+**
+- **Git** (for cloning)
+- **OpenAI API Key** (for GPT models)
+- **Local LLM server** (optional, for local models)
+
+### Installation
+
+1. **Clone the repository:**
+   ```bash
+   git clone <your-repo-url>
+   cd pycode
+   ```
+
+2. **Install the package in development mode:**
+   ```bash
+   pip install -e .
+   ```
+   
+   Or install dependencies manually:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **Set up environment variables:**
+   ```bash
+   # Copy the example environment file
+   cp .env.example .env
+   
+   # Edit .env and add your API keys
+   OPENAI_API_KEY=your_openai_api_key_here
+   ```
+
+### Configuration
+
+The project uses centralized model configuration in `config/models.py`. Available models:
+
+- **`remote`**: GPT-4o-mini (OpenAI)
+- **`local`**: ProkuraturaAI (local server)
+- **`claude`**: Claude-3-Sonnet (Anthropic)
+
+## 📚 Usage Guide
+
+### Running Individual Applications
+
+#### Chat Applications
+
+```bash
+# Basic chat with file history
+python -m pycode.chat_apps.tchat_gpt
+
+# In-memory chat
+python -m pycode.chat_apps.tchat_gpt_in_memory
+
+# Chat with conversation summarization
+python -m pycode.chat_apps.tchat_gpt_with_summary
+```
+
+#### LangChain Demos
+
+```bash
+# Basic chain examples
+python -m pycode.langchain_demos.basic_chain --language python --task "create a sorting function"
+
+# Multiple chains
+python -m pycode.langchain_demos.multiple_chains --language javascript --task "create a web scraper"
+
+# SQL agents (requires database setup)
+python -m pycode.langchain_demos.agents
+```
+
+#### API Integrations
+
+```bash
+# Ollama integration
+python -m pycode.api_integrations.ollama_api
+
+# Whisper speech-to-text
+python -m pycode.api_integrations.whisper
+```
+
+#### Utilities
+
+```bash
+# Generate code and tests
+python -m pycode.utilities.code_test_generator --language python --task "fibonacci function" --extension py
+
+# Streaming example
+python -m pycode.utilities.stream
+```
+
+### Using as a Package
+
+```python
+from pycode import get_llm, list_available_models
+
+# List available models
+print("Available models:", list_available_models())
+
+# Get an LLM instance
+llm = get_llm("remote")  # or "local", "claude"
+
+# Use in your code
+response = llm.invoke("Hello, how are you?")
+print(response.content)
+```
+
+### Custom Model Configuration
+
+Add new models in `config/models.py`:
+
+```python
+MODEL_CONFIGS = {
+    "custom_model": {
+        "model": "custom-model-name",
+        "model_provider": "provider",
+        "custom_param": "value",
+    }
+}
+```
+
+## 🔧 Development
+
+### Project Features
+
+- **🔌 Modular Design**: Clean separation of concerns with dedicated modules
+- **🎛️ Centralized Config**: All model configurations in one place
+- **🔄 Easy Model Switching**: Switch between local/remote models effortlessly
+- **📝 Conversation Management**: File-based and in-memory chat histories
+- **🤖 Agent Support**: SQL agents and custom tool integration
+- **🎯 Streaming Support**: Real-time response streaming
+- **🔍 Debug Features**: Built-in debugging and callback handlers
+
+### Adding New Applications
+
+1. **Create your Python file** in the appropriate module directory
+2. **Import the LLM configuration:**
+   ```python
+   from ..config import get_llm
+   
+   llm = get_llm("remote")  # or your preferred model
+   ```
+3. **Update the module's `__init__.py`** if needed
+
+### Database Setup (for SQL Agents)
+
+The SQL agents require a database. Set up your database and update the connection details in the respective agent files.
+
+## 📝 Environment Variables
+
+Create a `.env` file in the project root:
+
+```bash
+# OpenAI Configuration
+OPENAI_API_KEY=your_openai_api_key_here
+
+# Anthropic Configuration (optional)
+ANTHROPIC_API_KEY=your_anthropic_key_here
+
+# Local LLM Configuration (optional)
+LOCAL_LLM_BASE_URL=http://localhost:8000/v1
+LOCAL_LLM_MODEL=your_local_model_name
+
+# Database Configuration (for SQL agents)
+DATABASE_URL=your_database_connection_string
+```
+
+## 🐛 Troubleshooting
+
+### Common Issues
+
+1. **Import Errors:**
+   ```bash
+   # Make sure you've installed the package
+   pip install -e .
+   
+   # Or run from project root
+   cd pycode
+   python -m chat_apps.tchat_gpt
+   ```
+
+2. **API Key Errors:**
+   - Verify your `.env` file contains valid API keys
+   - Check that the `.env` file is in the project root
+   
+3. **Local Model Connection:**
+   - Ensure your local LLM server is running
+   - Check the `LOCAL_LLM_BASE_URL` in your `.env` file
+
+4. **Module Not Found:**
+   ```bash
+   # Install missing dependencies
+   pip install -r requirements.txt
+   
+   # Or install specific packages
+   pip install langchain langchain-openai python-dotenv
+   ```
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature-name`
+3. Make your changes
+4. Add tests if applicable
+5. Commit your changes: `git commit -am 'Add feature'`
+6. Push to the branch: `git push origin feature-name`
+7. Create a Pull Request
+
+## 📜 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- **LangChain** - For the excellent framework
+- **OpenAI** - For GPT models and API
+- **Anthropic** - For Claude models
+- **Stephen Grider** - Course inspiration
+
+---
+
+**Happy coding! 🚀**

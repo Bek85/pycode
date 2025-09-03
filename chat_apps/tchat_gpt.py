@@ -4,26 +4,23 @@ from langchain_core.prompts import (
     HumanMessagePromptTemplate,
 )
 from langchain_core.messages import SystemMessage
-from langchain.chat_models import init_chat_model
 from langchain_core.runnables import RunnableWithMessageHistory
 from langchain_community.chat_message_histories import FileChatMessageHistory
 from dotenv import load_dotenv
 
+# Handle both direct execution and module import
+try:
+    from ..config import get_llm
+except ImportError:
+    # Fallback for direct execution
+    import sys
+    import os
+    sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    from config import get_llm
+
 load_dotenv()
 
-local_model_name = "ProkuraturaAI"
-remote_model_name = "gpt-4o-mini"
-
-local_llm = init_chat_model(
-    model=local_model_name,
-    model_provider="openai",
-    openai_api_base="http://172.18.35.123:8000/v1",
-)
-
-# remote_llm = init_chat_model(
-#   model=remote_model_name
-#   model_provider="openai"
-# )
+llm = get_llm("local")
 
 
 def get_chat_history(session_id: str) -> FileChatMessageHistory:
@@ -51,7 +48,7 @@ prompt = ChatPromptTemplate.from_messages(
 #     ]
 # )
 
-chain = prompt | local_llm
+chain = prompt | llm
 
 chain_with_history = RunnableWithMessageHistory(
     chain,

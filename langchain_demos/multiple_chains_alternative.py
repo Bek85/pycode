@@ -2,7 +2,15 @@ from langchain_openai import OpenAI
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough, RunnableLambda
-from langchain.chat_models import init_chat_model
+# Handle both direct execution and module import
+try:
+    from ..config import get_llm
+except ImportError:
+    # Fallback for direct execution
+    import sys
+    import os
+    sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    from config import get_llm
 from dotenv import load_dotenv
 import argparse
 
@@ -14,15 +22,8 @@ parser.add_argument("--language", default="python")
 args = parser.parse_args()
 
 # Initialize components
-local_model_name = "ProkuraturaAI"
-remote_model_name = "gpt-4o-mini"
-
 # Initialize the LLM
-llm = init_chat_model(
-    model=local_model_name,
-    model_provider="openai",
-    openai_api_base="http://172.18.35.123:8000/v1",
-)
+llm = get_llm("local")
 output_parser = StrOutputParser()
 
 # Create individual chains (reusable components)
