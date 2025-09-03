@@ -1,14 +1,9 @@
-from langchain.prompts import (
-    HumanMessagePromptTemplate,
-    ChatPromptTemplate,
-    MessagesPlaceholder,
-    SystemMessagePromptTemplate,
-)
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_core.messages import SystemMessage
 from langchain.chat_models import init_chat_model
 from langchain_core.runnables import RunnableWithMessageHistory
 from langchain_community.chat_message_histories import FileChatMessageHistory
 from dotenv import load_dotenv
-
 
 load_dotenv()
 
@@ -21,28 +16,17 @@ local_llm = init_chat_model(
     openai_api_base="http://172.18.35.123:8000/v1",
 )
 
-remote_llm = init_chat_model(
-    model=remote_model_name,
-    model_provider="openai",
-)
-
 
 def get_chat_history(session_id: str) -> FileChatMessageHistory:
     return FileChatMessageHistory(file_path=f"chat_history_{session_id}.json")
 
 
-# ? Define your system message
-system_message = (
-    "You are a helpful AI assistant. Be concise and accurate in your responses."
-)
-
-prompt = ChatPromptTemplate(
-    input_variables=["chat_history", "content"],
-    messages=[
-        SystemMessagePromptTemplate.from_template(system_message),
+prompt = ChatPromptTemplate.from_messages(
+    [
+        SystemMessage(content="You are a helpful AI assistant."),
         MessagesPlaceholder(variable_name="chat_history"),
-        HumanMessagePromptTemplate.from_template("{content}"),
-    ],
+        ("human", "{content}"),
+    ]
 )
 
 chain = prompt | local_llm
