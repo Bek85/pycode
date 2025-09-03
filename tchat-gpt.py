@@ -2,6 +2,7 @@ from langchain.prompts import (
     HumanMessagePromptTemplate,
     ChatPromptTemplate,
     MessagesPlaceholder,
+    SystemMessagePromptTemplate,
 )
 from langchain.chat_models import init_chat_model
 from langchain_core.runnables import RunnableWithMessageHistory
@@ -11,22 +12,40 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-chat_model = init_chat_model(model="gpt-4o-mini", model_provider="openai")
+local_model_name = "ProkuraturaAI"
+remote_model_name = "gpt-4o-mini"
+
+local_llm = init_chat_model(
+    model=local_model_name,
+    model_provider="openai",
+    openai_api_base="http://172.18.35.123:8000/v1",
+)
+
+remote_llm = init_chat_model(
+    model=remote_model_name,
+    model_provider="openai",
+)
 
 
 def get_chat_history(session_id: str) -> FileChatMessageHistory:
     return FileChatMessageHistory(file_path=f"chat_history_{session_id}.json")
 
 
+# ? Define your system message
+system_message = (
+    "You are a helpful AI assistant. Be concise and accurate in your responses."
+)
+
 prompt = ChatPromptTemplate(
     input_variables=["chat_history", "content"],
     messages=[
+        SystemMessagePromptTemplate.from_template(system_message),
         MessagesPlaceholder(variable_name="chat_history"),
         HumanMessagePromptTemplate.from_template("{content}"),
     ],
 )
 
-chain = prompt | chat_model
+chain = prompt | local_llm
 
 chain_with_history = RunnableWithMessageHistory(
     chain,
