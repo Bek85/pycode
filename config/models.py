@@ -8,15 +8,18 @@ MODEL_CONFIGS = {
         "model": "ProkuraturaAI",
         "model_provider": "openai",
         "openai_api_base": "http://172.18.35.123:8000/v1",
+        "temperature": 0.1,  # Controls randomness (0.0 = deterministic, 1.0 = very random)
     },
     "remote": {
         "model": "gpt-4o-mini",
         "model_provider": "openai",
+        "temperature": 0.3,  # Lower temperature for more focused responses
     },
     # Easy to add more configurations
     "claude": {
         "model": "claude-3-sonnet-20240229",
         "model_provider": "anthropic",
+        "temperature": 0.5,  # Balanced creativity and consistency
     },
 }
 

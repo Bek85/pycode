@@ -1,5 +1,13 @@
 from dotenv import load_dotenv
-from ..config import get_llm  # Commented out as this file uses OpenAI SDK instead
+# Handle both direct execution and module import  
+try:
+    from ..config import get_llm
+except ImportError:
+    # Fallback for direct execution
+    import sys
+    import os
+    sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    from config import get_llm
 import os
 from openai import OpenAI  # OpenAI SDK
 

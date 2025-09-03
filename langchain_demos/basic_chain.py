@@ -1,7 +1,15 @@
 from dotenv import load_dotenv
 from langchain.prompts import PromptTemplate
 
-from ..config import get_llm  # Commented out as this file uses OpenAI SDK instead
+# Handle both direct execution and module import
+try:
+    from ..config import get_llm
+except ImportError:
+    # Fallback for direct execution
+    import sys
+    import os
+    sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    from config import get_llm
 from openai import OpenAI
 import argparse
 import os
@@ -23,51 +31,53 @@ local_model_name = "ProkuraturaAI"
 
 ######################################################################
 # Using OpenAI SDK
-client = OpenAI(
-    base_url="http://172.18.35.123:8000/v1",
-    api_key=os.getenv("OPENAI_API_KEY"),
-)
-
-# Get user input for language and task
-language = input("Enter the programming language: ")
-task = input("Enter the task description: ")
-
-user_input = f"You are a code generator. You are given a task to generate function for {language or args.language} that will {task or args.task}."
-
-result = client.chat.completions.create(
-    model=local_model_name,
-    messages=[{"role": "user", "content": user_input}],
-)
-print(result.choices[0].message.content)
-
-######################################################################
-
-######################################################################
-# # Using LangChain
-
-# llm = get_llm("local")
-
-# code_prompt = PromptTemplate(
-#     template="""
-#     You are a code generator.
-#     You are given a task to generate function for {language} that will {task}.
-#     """,
-#     input_variables=["language", "task"],
+# client = OpenAI(
+#     base_url="http://172.18.35.123:8000/v1",
+#     api_key=os.getenv("OPENAI_API_KEY"),
 # )
 
 # # Get user input for language and task
 # language = input("Enter the programming language: ")
 # task = input("Enter the task description: ")
 
-# # Create a chain
-# chain = code_prompt | llm | StrOutputParser()
+# user_input = f"You are a code generator. You are given a task to generate function for {language or args.language} that will {task or args.task}."
 
-# # Invoke the chain
-# result = chain.invoke(
-#     {"language": language or args.language, "task": task or args.task}
+# result = client.chat.completions.create(
+#     model=local_model_name,
+#     messages=[{"role": "user", "content": user_input}],
 # )
+# print(result.choices[0].message.content)
 
-# print(result)
+######################################################################
+
+######################################################################
+# # Using LangChain
+
+llm = get_llm("local")
+
+output_parser = StrOutputParser()
+
+code_prompt = PromptTemplate(
+    template="""
+    You are a code generator.
+    You are given a task to generate function for {language} that will {task}.
+    """,
+    input_variables=["language", "task"],
+)
+
+# Get user input for language and task
+language = input("Enter the programming language: ")
+task = input("Enter the task description: ")
+
+# Create a chain
+chain = code_prompt | llm | output_parser
+
+# Invoke the chain
+result = chain.invoke(
+    {"language": language or args.language, "task": task or args.task}
+)
+
+print(result)
 
 
 ######################################################################
