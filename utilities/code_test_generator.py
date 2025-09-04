@@ -57,25 +57,25 @@ test_prompt = PromptTemplate(
     input_variables=["language", "code"],
 )
 
-# Create the chain using the new pipe syntax
-chain = (
-    RunnablePassthrough()
-    .assign(
-        code=lambda x: (code_prompt | llm).invoke(
-            {"language": x["language"], "task": x["task"]}
-        )
-    )
-    .assign(
-        test=lambda x: (test_prompt | llm).invoke(
-            {"language": x["language"], "code": x["code"]}
-        )
-    )
-)
+# Create chains for code and test generation
+code_chain = code_prompt | llm
+test_chain = test_prompt | llm
 
-# Invoke the chain
-response = chain.invoke(
-    {"language": language or args.language, "task": task or args.task}
-)
+# Generate code first
+input_data = {"language": language or args.language, "task": task or args.task}
+generated_code = code_chain.invoke(input_data).content
+
+# Generate test using the generated code
+generated_test = test_chain.invoke({
+    "language": input_data["language"], 
+    "code": generated_code
+}).content
+
+# Prepare response
+response = {
+    "code": generated_code,
+    "test": generated_test
+}
 
 
 print(">>>>>>>>>> GENERATED CODE <<<<<<<<<<")
