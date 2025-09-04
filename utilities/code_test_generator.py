@@ -1,5 +1,6 @@
 import os
 from dotenv import load_dotenv
+
 # Handle both direct execution and module import
 try:
     from ..config import get_llm
@@ -7,6 +8,7 @@ except ImportError:
     # Fallback for direct execution
     import sys
     import os
+
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     from config import get_llm
 from langchain_core.runnables import RunnablePassthrough
@@ -34,9 +36,7 @@ load_dotenv()
 ######################################################################
 # LangChain
 
-local_llm = get_llm("local")
-
-remote_llm = get_llm("remote")
+llm = get_llm("local")
 
 language = input("Enter the programming language: ")
 task = input("Enter the task description: ")
@@ -61,12 +61,12 @@ test_prompt = PromptTemplate(
 chain = (
     RunnablePassthrough()
     .assign(
-        code=lambda x: (code_prompt | local_llm).invoke(
+        code=lambda x: (code_prompt | llm).invoke(
             {"language": x["language"], "task": x["task"]}
         )
     )
     .assign(
-        test=lambda x: (test_prompt | local_llm).invoke(
+        test=lambda x: (test_prompt | llm).invoke(
             {"language": x["language"], "code": x["code"]}
         )
     )
