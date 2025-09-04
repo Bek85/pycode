@@ -7,6 +7,7 @@ from langchain_core.messages import SystemMessage
 from langchain_core.runnables import RunnableWithMessageHistory
 from langchain_community.chat_message_histories import FileChatMessageHistory
 from dotenv import load_dotenv
+from colorama import Fore, Style, init
 
 # Handle both direct execution and module import
 try:
@@ -20,6 +21,9 @@ except ImportError:
     from config import get_llm
 
 load_dotenv()
+
+# Initialize colorama for Windows compatibility
+init(autoreset=True)
 
 llm = get_llm("local")
 
@@ -58,9 +62,18 @@ chain_with_history = RunnableWithMessageHistory(
     history_messages_key="chat_history",
 )
 
+print(f"{Fore.CYAN}🤖 AI Chat Assistant - Type 'quit' to exit{Style.RESET_ALL}")
+print(f"{Fore.YELLOW}{'='*50}{Style.RESET_ALL}")
+
 while True:
-    user_input = input(">> ")
+    user_input = input(f"{Fore.GREEN}👤 You: {Style.RESET_ALL}")
+
+    if user_input.lower() in ["quit", "exit", "q"]:
+        print(f"{Fore.CYAN}👋 Goodbye!{Style.RESET_ALL}")
+        break
+
     result = chain_with_history.invoke(
         {"content": user_input}, config={"configurable": {"session_id": "default"}}
     )
-    print(result.content)
+    print(f"{Fore.BLUE}🤖 {llm.model_name}: {Style.RESET_ALL}{result.content}")
+    print(f"{Fore.YELLOW}{'-'*50}{Style.RESET_ALL}")
