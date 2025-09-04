@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Read(/C:\\Alex\\learning\\ai_apps\\stephen_grider\\pycode\\.venv\\Scripts/**)",
+      "Read(/C:\\Alex\\learning\\ai_apps\\stephen_grider\\pycode\\utilities/**)"
     ],
     "deny": [],
     "ask": []
