@@ -21,6 +21,12 @@ MODEL_CONFIGS = {
         "model_provider": "anthropic",
         "temperature": 0.5,  # Balanced creativity and consistency
     },
+    "ollama": {
+        "model": "qwen3:4b",  # Updated model name
+        "model_provider": "ollama",
+        "base_url": "http://localhost:11434",  # Default Ollama port
+        "temperature": 0.2,  # Adjust as needed
+    },
 }
 
 
@@ -28,7 +34,7 @@ def get_llm(model_type: str):
     """Get LLM instance based on model type
 
     Args:
-        model_type: One of 'local', 'remote', 'claude'
+        model_type: One of 'local', 'remote', 'claude', 'ollama'
 
     Returns:
         Initialized LLM instance

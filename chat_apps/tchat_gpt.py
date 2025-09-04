@@ -75,5 +75,7 @@ while True:
     result = chain_with_history.invoke(
         {"content": user_input}, config={"configurable": {"session_id": "default"}}
     )
-    print(f"{Fore.BLUE}🤖 {llm.model_name}: {Style.RESET_ALL}{result.content}")
+    print(
+        f"{Fore.BLUE}🤖 {getattr(llm, 'model_name', None) or getattr(llm, 'model', 'AI')}: {Style.RESET_ALL}{result.content}"
+    )
     print(f"{Fore.YELLOW}{'-'*50}{Style.RESET_ALL}")

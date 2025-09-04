@@ -12,6 +12,7 @@ except ImportError:
     # Fallback for direct execution
     import sys
     import os
+
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     from config import get_llm
 from langchain_core.runnables import RunnableWithMessageHistory
@@ -76,7 +77,9 @@ chain_with_history = RunnableWithMessageHistory(
     history_messages_key="chat_history",
 )
 
-print(f"{Fore.CYAN}🤖 AI Chat Assistant (In-Memory) - Type 'quit' to exit{Style.RESET_ALL}")
+print(
+    f"{Fore.CYAN}🤖 AI Chat Assistant (In-Memory) - Type 'quit' to exit{Style.RESET_ALL}"
+)
 print(f"{Fore.YELLOW}{'='*50}{Style.RESET_ALL}")
 
 while True:
@@ -89,5 +92,7 @@ while True:
     result = chain_with_history.invoke(
         {"content": user_input}, config={"configurable": {"session_id": "default"}}
     )
-    print(f"{Fore.BLUE}🤖 {llm.model_name}: {Style.RESET_ALL}{result.content}")
+    print(
+        f"{Fore.BLUE}🤖 {getattr(llm, 'model_name', None) or getattr(llm, 'model', 'AI')}: {Style.RESET_ALL}{result.content}"
+    )
     print(f"{Fore.YELLOW}{'-'*50}{Style.RESET_ALL}")
