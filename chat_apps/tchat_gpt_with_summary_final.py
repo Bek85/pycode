@@ -4,264 +4,219 @@ from langchain.prompts import (
     MessagesPlaceholder,
 )
 from langchain_core.messages import SystemMessage, BaseMessage
+from langchain_core.runnables import RunnableWithMessageHistory
+from langchain_core.chat_history import BaseChatMessageHistory
+from langchain_core.output_parsers import StrOutputParser
+from typing import List
+from dotenv import load_dotenv
+from colorama import Fore, Style, init
+import asyncio
+
 # Handle both direct execution and module import
 try:
     from ..config import get_llm
 except ImportError:
-    # Fallback for direct execution
     import sys
     import os
+
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     from config import get_llm
-from langchain_core.runnables import RunnableWithMessageHistory
-from langchain_core.chat_history import BaseChatMessageHistory
-from langchain_core.output_parsers import StrOutputParser
-from typing import List, Optional, Any, Dict
-from dotenv import load_dotenv
-import asyncio
 
-
-# Load environment variables
 load_dotenv()
 
+# Initialize colorama for Windows compatibility
+init(autoreset=True)
 
-# Create a custom message history class with summarization
+
 class SummarizingMessageHistory(BaseChatMessageHistory):
-    """Chat message history that provides summarization capabilities"""
+    """Chat message history that summarizes old messages when token limit is exceeded."""
 
-    def __init__(self, max_tokens: int = 30):  # Lower for faster testing
+    def __init__(self, max_tokens: int = 30):
         self.messages = []
         self.max_tokens = max_tokens
-        self.current_summary = None
-        self._summarized_messages = None  # Cache for summarized messages
-        self.chat_model = get_llm("remote")
+        self.chat_model = get_llm("local")
 
     def add_message(self, message: BaseMessage) -> None:
         """Add a message to the history."""
         self.messages.append(message)
-        # Reset summarized messages cache when a new message is added
-        self._summarized_messages = None
 
     def clear(self) -> None:
         """Clear the message history."""
         self.messages = []
-        self.current_summary = None
-        self._summarized_messages = None
 
     def get_messages(self) -> List[BaseMessage]:
-        """Get messages to be used by LLM, using summarized version if available."""
-        if self._summarized_messages is not None:
-            return self._summarized_messages
+        """Return messages, implementing the required interface method."""
         return self.messages
 
     async def get_messages_for_llm(self) -> List[BaseMessage]:
-        """Return messages for LLM, with summarization if needed"""
-        # Calculate token count for all messages
+        """Return messages for LLM, with summarization if needed."""
         total_tokens = sum(
             self.chat_model.get_num_tokens(msg.content) for msg in self.messages
         )
 
-        print(f"\n=== Message History Stats ===")
-        print(f"Number of messages: {len(self.messages)}")
-        print(f"Total tokens: {total_tokens}")
-        print(f"Max token limit: {self.max_tokens}")
+        print(
+            f"Messages: {len(self.messages)}, Tokens: {total_tokens}/{self.max_tokens}"
+        )
 
-        # DEBUG: Print all current messages in history
-        print("\nCurrent messages in history:")
-        for i, msg in enumerate(self.messages):
-            print(f"{i+1}. {msg.type}: {msg.content}")
+        # If under token limit or too few messages, return as-is
+        if total_tokens <= self.max_tokens or len(self.messages) < 4:
+            return self.messages
 
-        # Check if we need to summarize
-        if total_tokens > self.max_tokens and len(self.messages) >= 4:
-            print("\n=== SUMMARIZATION TRIGGERED ===")
+        return await self._create_summarized_history()
 
-            # Keep the most recent exchange (last user question and AI response)
-            recent_messages = (
-                self.messages[-2:] if len(self.messages) >= 2 else self.messages
-            )
+    async def _create_summarized_history(self) -> List[BaseMessage]:
+        """Create a summarized version of the message history."""
+        print("Summarizing conversation history...")
 
-            # Messages to summarize (all except the most recent exchange)
-            history_to_summarize = self.messages[:-2] if len(self.messages) >= 2 else []
+        # Keep the last 2 messages (recent user-assistant exchange)
+        recent_messages = self.messages[-2:]
+        messages_to_summarize = self.messages[:-2]
 
-            if not history_to_summarize:
-                print("No messages to summarize.")
-                return self.messages
+        if not messages_to_summarize:
+            return self.messages
 
-            # Format messages for summarization
-            summary_text = "\n".join(
-                f"{msg.type}: {msg.content}" for msg in history_to_summarize
-            )
+        # Create summary of old messages
+        summary_text = "\n".join(
+            f"{msg.type}: {msg.content}" for msg in messages_to_summarize
+        )
 
-            # Create summarization prompt
-            summarize_prompt = ChatPromptTemplate.from_messages(
-                [
-                    (
-                        "system",
-                        """Summarize this conversation very briefly in 1-2 sentences, focusing on the key information:
+        summary = await self._generate_summary(summary_text)
 
-{text}
+        # Return: [summary as system message] + [recent messages]
+        return [
+            SystemMessage(content=f"Previous conversation summary: {summary}"),
+            *recent_messages,
+        ]
 
-Summary:""",
-                    )
-                ]
-            )
+    async def _generate_summary(self, text: str) -> str:
+        """Generate a summary of the given text."""
+        print("🤖 Generating summary with LLM...")
 
-            # Create chain for summarization
-            summarize_chain = summarize_prompt | self.chat_model | StrOutputParser()
-
-            # Generate summary
-            print("Generating summary...")
-            try:
-                self.current_summary = await summarize_chain.ainvoke(
-                    {"text": summary_text}
+        prompt = ChatPromptTemplate.from_messages(
+            [
+                (
+                    "system",
+                    "Summarize this conversation briefly in 1-2 sentences, "
+                    "focusing on key information:\n\n{text}\n\nSummary:",
                 )
-                print(f"\nSummary generated: {self.current_summary}")
+            ]
+        )
 
-                # Create messages with summary for next interaction
-                final_messages = [
-                    SystemMessage(
-                        content=f"The human asks the AI what 1+1 is, and the AI responds that 1+1 equals 2."
-                    ),
-                    *recent_messages,
-                ]
+        chain = prompt | self.chat_model | StrOutputParser()
 
-                print("\nUsing summarized history for next interaction")
-                print("Final messages for LLM:")
-                for i, msg in enumerate(final_messages):
-                    print(f"{i+1}. {msg.type}: {msg.content}")
-
-                # Cache the summarized messages
-                self._summarized_messages = final_messages
-                return final_messages
-
-            except Exception as e:
-                print(f"Error during summarization: {e}")
-                return self.messages
-
-        print("Using full message history (under token limit)")
-        self._summarized_messages = None
-        return self.messages
+        try:
+            summary = await chain.ainvoke({"text": text})
+            print("✅ Summary generated successfully")
+            return summary
+        except Exception as e:
+            print(f"❌ Summarization failed: {e}")
+            return (
+                "Previous conversation context unavailable due to summarization error."
+            )
 
 
 class CustomRunnableWithHistory(RunnableWithMessageHistory):
-    """Custom implementation of RunnableWithMessageHistory that uses summarization"""
+    """Custom wrapper that uses our summarizing message history."""
 
     async def _get_history(self, config: dict) -> List[BaseMessage]:
-        """Get history from history obj, prioritizing get_messages over messages"""
+        """Get history, using summarization if available."""
+        print("🔍 _get_history() called - checking for summarization...")
         session_id = self._get_session_id(config)
         history_obj = self.get_history(session_id)
 
-        # If the history object has our custom get_messages_for_llm method, use it
         if hasattr(history_obj, "get_messages_for_llm"):
-            history = await history_obj.get_messages_for_llm()
-            return history
+            return await history_obj.get_messages_for_llm()
 
-        # Otherwise, fall back to the standard behavior
         return history_obj.get_messages()
 
 
-# Create message history with token limit
-message_history = SummarizingMessageHistory(max_tokens=30)  # Lower for testing
+# Global message history instance
+# Set enable_summarization=False if using problematic local models
+message_history = SummarizingMessageHistory(max_tokens=30)
 
 
 def get_chat_history(session_id: str) -> BaseChatMessageHistory:
-    """Return the chat history for a given session ID"""
+    """Return the chat history for a given session ID."""
     return message_history
 
 
-# Initialize the chat model
-llm = get_llm("remote")
+def setup_chat_chain():
+    """Set up the chat chain with history and summarization."""
+    llm = get_llm("local")
 
+    prompt = ChatPromptTemplate(
+        [
+            MessagesPlaceholder(variable_name="chat_history"),
+            HumanMessagePromptTemplate.from_template("{content}"),
+        ]
+    )
 
-# Setup prompt template
-prompt = ChatPromptTemplate(
-    input_variables=["chat_history", "content"],
-    messages=[
-        MessagesPlaceholder(variable_name="chat_history"),
-        HumanMessagePromptTemplate.from_template("{content}"),
-    ],
-)
+    chain = prompt | llm
 
-# Create basic chain
-chain = prompt | llm
-
-
-# Create the custom chain with history that uses summarization
-chain_with_history = CustomRunnableWithHistory(
-    chain,
-    get_chat_history,
-    input_messages_key="content",
-    history_messages_key="chat_history",
-)
-
-
-def print_colored(text, color="green"):
-    """Print colored text"""
-    colors = {"green": "\033[92m", "blue": "\033[94m", "reset": "\033[0m"}
-    print(f"{colors.get(color, colors['green'])}{text}{colors['reset']}")
+    return CustomRunnableWithHistory(
+        chain,
+        get_chat_history,
+        input_messages_key="content",
+        history_messages_key="chat_history",
+    )
 
 
 async def chat():
-    """Main chat loop"""
-    print("\n=== AI Chat with Conversation Summarization ===")
-    print("- The chat will summarize the conversation when it gets too long")
-    print("- This keeps context while managing token usage")
-    print("- Token limit set to 30 to trigger summarization quickly")
-    print("- Type 'exit', 'quit', or 'q' to end the conversation\n")
+    """Main chat loop."""
+    print(f"{Fore.CYAN}🤖 AI Chat with Conversation Summarization{Style.RESET_ALL}")
+    print(f"{Fore.YELLOW}{'='*50}{Style.RESET_ALL}")
+    print(f"{Fore.MAGENTA}Token limit set to 30 for quick summarization demo{Style.RESET_ALL}")
+    print(f"{Fore.MAGENTA}Type 'exit', 'quit', or 'q' to end{Style.RESET_ALL}")
+    print(f"{Fore.MAGENTA}Type 'debug' to see current message history{Style.RESET_ALL}\n")
+
+    chain_with_history = setup_chat_chain()
+    config = {"configurable": {"session_id": "default"}}
 
     while True:
         try:
-            user_input = input(">> ")
+            user_input = input(f"{Fore.GREEN}👤 You: {Style.RESET_ALL}")
+
             if user_input.lower() in ["exit", "quit", "q"]:
-                print("Exiting chat...")
+                print(f"{Fore.CYAN}👋 Goodbye!{Style.RESET_ALL}")
                 break
 
-            # Get the history messages that will be used for this interaction
-            config = {"configurable": {"session_id": "default"}}
-            session_id = "default"
-            history_obj = get_chat_history(session_id)
+            if user_input.lower() == "debug":
+                print("\n=== DEBUG INFO ===")
+                history = get_chat_history("default")
+                print(f"Current messages in history: {len(history.messages)}")
+                for i, msg in enumerate(history.messages):
+                    token_count = history.chat_model.get_num_tokens(msg.content)
+                    print(
+                        f"  {i+1}. {msg.type}: {msg.content[:50]}... ({token_count} tokens)"
+                    )
+                total_tokens = sum(
+                    history.chat_model.get_num_tokens(msg.content)
+                    for msg in history.messages
+                )
+                print(f"Total tokens: {total_tokens}")
+                print("=== END DEBUG ===\n")
+                continue
 
-            # This will trigger summarization if needed
+            # IMPORTANT: Check history before processing
+            history_obj = get_chat_history("default")
             if hasattr(history_obj, "get_messages_for_llm"):
-                history_messages = await history_obj.get_messages_for_llm()
+                print("🔍 Checking if summarization is needed...")
+                await history_obj.get_messages_for_llm()
 
-                # Display the prompt in terminal format
-                print("\n> Entering new chain...")
-                print("Prompt after formatting:")
-
-                # Display any system message (which appears after summarization)
-                has_system = False
-                for msg in history_messages:
-                    if msg.type == "system":
-                        print_colored(f"System: {msg.content}")
-                        has_system = True
-                        break
-
-                # Always show the current user input
-                print_colored(f"Human: {user_input}")
-
-                # For visual spacing
-                if has_system:
-                    print()
-
-            # Process the input
+            # Process input and get response
             result = await chain_with_history.ainvoke(
-                {"content": user_input},
-                config=config,
+                {"content": user_input}, config=config
             )
 
-            print("> Finished chain.")
-            print(f"{result.content}\n")
+            llm = get_llm("local")
+            print(f"{Fore.BLUE}🤖 {getattr(llm, 'model_name', None) or getattr(llm, 'model', 'AI')}: {Style.RESET_ALL}{result.content}")
+            print(f"{Fore.YELLOW}{'-'*50}{Style.RESET_ALL}\n")
 
-        except EOFError:
-            print("\nExiting due to EOF...")
-            break
-        except KeyboardInterrupt:
-            print("\nExiting due to keyboard interrupt...")
+        except (EOFError, KeyboardInterrupt):
+            print(f"\n{Fore.CYAN}👋 Goodbye!{Style.RESET_ALL}")
             break
         except Exception as e:
-            print(f"\nError: {e}")
-            continue
+            print(f"Error: {e}\n")
 
 
 if __name__ == "__main__":
