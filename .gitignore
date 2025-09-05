@@ -3,6 +3,6 @@ chat_history.json
 chat_history_*.json
 ./emb
 emb/
-emb_local/
+emb_*/
 __pycache__/
 .venv/

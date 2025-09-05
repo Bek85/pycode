@@ -1,22 +1,20 @@
 from dotenv import load_dotenv
 from langchain_community.document_loaders import TextLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_huggingface import HuggingFaceEmbeddings  # Updated
-from langchain_chroma import Chroma  # Updated
+from langchain_chroma import Chroma
+import sys
 import os
 import shutil
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from config.embeddings import get_embeddings
 
 
-def main():
+def main(embedding_type="local"):
     # Load environment variables
     load_dotenv()
 
-    # Initialize local embeddings
-    embeddings = HuggingFaceEmbeddings(
-        model_name="all-MiniLM-L6-v2",
-        model_kwargs={"device": "cpu"},
-        encode_kwargs={"normalize_embeddings": True},
-    )
+    # Initialize embeddings
+    embeddings = get_embeddings(embedding_type)
 
     # Use RecursiveCharacterTextSplitter for better chunking
     text_splitter = RecursiveCharacterTextSplitter(
@@ -34,10 +32,10 @@ def main():
         print("Error: facts.txt file not found")
         return
 
-    # Use a different directory for local embeddings
-    persist_dir = "emb_local"
+    # Use directory based on embedding type
+    persist_dir = f"emb_{embedding_type}"
 
-    # Create vector database with local embeddings
+    # Create vector database with embeddings
     db = Chroma.from_documents(
         documents, embedding=embeddings, persist_directory=persist_dir
     )
@@ -58,17 +56,14 @@ def main():
             print(f"Metadata: {result.metadata}")
 
 
-def search_existing_db(query: str, persist_dir="emb_local"):
+def search_existing_db(query: str, embedding_type="local"):
     """Function to search an existing database without recreating it"""
     load_dotenv()
 
-    embeddings = HuggingFaceEmbeddings(
-        model_name="all-MiniLM-L6-v2",
-        model_kwargs={"device": "cpu"},
-        encode_kwargs={"normalize_embeddings": True},
-    )
+    embeddings = get_embeddings(embedding_type)
 
     # Load existing database
+    persist_dir = f"emb_{embedding_type}"
     try:
         db = Chroma(persist_directory=persist_dir, embedding_function=embeddings)
         results = db.similarity_search(query, k=3)
@@ -86,11 +81,14 @@ def search_existing_db(query: str, persist_dir="emb_local"):
 
 
 if __name__ == "__main__":
-    # Run the main pipeline
-    main()
+    # Run the main pipeline with local embeddings (default)
+    main("local")
+
+    # Example of using OpenAI embeddings
+    # main("openai")
 
     # Example of searching existing database
     print("\n" + "=" * 60)
     print("SEARCHING EXISTING DATABASE")
     print("=" * 60)
-    search_existing_db("Tell me about strawberry")
+    search_existing_db("Tell me about strawberry", "local")
