@@ -27,10 +27,11 @@ load_dotenv()
 llm = get_llm("local")
 
 # Initialize the embeddings
-embeddings = get_embeddings("openai")
+embedding_type = "openai"
+embeddings = get_embeddings(embedding_type)
 
 # Initialize the Chroma database
-db = Chroma(persist_directory="emb_openai", embedding_function=embeddings)
+db = Chroma(persist_directory=f"emb_{embedding_type}", embedding_function=embeddings)
 
 # Initialize the retriever
 # retriever = db.as_retriever()

@@ -3,8 +3,10 @@ import sys
 from dotenv import load_dotenv
 from langchain_community.document_loaders import TextLoader
 from langchain.text_splitter import CharacterTextSplitter
-from langchain_openai import OpenAIEmbeddings
-from langchain_community.vectorstores import Chroma
+from langchain_chroma import Chroma
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from config.embeddings import get_embeddings
 from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
@@ -151,7 +153,7 @@ def format_results(results, query_type="search"):
     console.print()
 
 
-def main():
+def main(embedding_type="openai"):
     """Main interactive chat function"""
     try:
         # Load environment variables
@@ -163,7 +165,7 @@ def main():
         )
 
         # Initialize the embeddings
-        embeddings = OpenAIEmbeddings()
+        embeddings = get_embeddings(embedding_type)
 
         # Initialize the text splitter
         text_splitter = CharacterTextSplitter(
@@ -176,7 +178,7 @@ def main():
 
         # Embed and store the documents
         db = Chroma.from_documents(
-            documents, embedding=embeddings, persist_directory="emb"
+            documents, embedding=embeddings, persist_directory=f"emb_{embedding_type}"
         )
 
         console.print(
@@ -250,10 +252,14 @@ def main():
             f"[ERR] [bold bright_red]Failed to initialize the facts database: {str(e)}[/bold bright_red]"
         )
         console.print(
-            "[dim]Make sure you have an OpenAI API key set in your .env file![/dim]"
+            "[dim]Make sure you have the required API keys set in your .env file![/dim]"
         )
         sys.exit(1)
 
 
 if __name__ == "__main__":
-    main()
+    # Run with OpenAI embeddings by default
+    main("openai")
+    
+    # To use local embeddings, change to:
+    # main("local")
