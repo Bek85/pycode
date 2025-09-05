@@ -1,32 +1,36 @@
 from dotenv import load_dotenv
-from langchain_openai import OpenAIEmbeddings, ChatOpenAI
+from langchain_openai import ChatOpenAI
+
 # Handle both direct execution and module import
 try:
     from ..config import get_llm
+    from ..config.embeddings import get_embeddings
 except ImportError:
     # Fallback for direct execution
     import sys
     import os
+
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     from config import get_llm
+    from config.embeddings import get_embeddings
 from langchain_chroma import Chroma
 from langchain.chains import RetrievalQA
 from redundant_filter_retriever import RedundantFilterRetriever
 import langchain
 
-langchain.debug = True
+# langchain.debug = True
 
 
 load_dotenv()
 
 # Initialize the LLM
-llm = get_llm("remote")
+llm = get_llm("local")
 
 # Initialize the embeddings
-embeddings = OpenAIEmbeddings()
+embeddings = get_embeddings("openai")
 
 # Initialize the Chroma database
-db = Chroma(persist_directory="emb", embedding_function=embeddings)
+db = Chroma(persist_directory="emb_openai", embedding_function=embeddings)
 
 # Initialize the retriever
 # retriever = db.as_retriever()
