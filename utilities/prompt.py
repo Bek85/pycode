@@ -20,7 +20,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from redundant_filter_retriever import RedundantFilterRetriever
 import langchain
 
-# langchain.debug = True
+langchain.debug = True
 
 
 load_dotenv()

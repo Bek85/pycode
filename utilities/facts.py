@@ -45,7 +45,7 @@ def main(embedding_type="openai"):
 
     # Search for similar documents
     query = "What is an interesting fact about the English language?"
-    results = db.similarity_search(query, k=1)  # Get top 1 result
+    results = db.similarity_search(query, k=3)  # Get top 3 result
 
     print(f"\nQuery: {query}")
     print("=" * 50)
