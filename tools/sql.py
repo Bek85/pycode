@@ -5,7 +5,7 @@ from typing import List
 
 
 def get_db_connection():
-    conn = sqlite3.connect("db/db.sqlite")
+    conn = sqlite3.connect("../db/db.sqlitedb")
     return conn
 
 

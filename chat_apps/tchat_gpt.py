@@ -25,7 +25,7 @@ load_dotenv()
 # Initialize colorama for Windows compatibility
 init(autoreset=True)
 
-llm = get_llm("local")
+llm = get_llm("deepseek")
 
 
 def get_chat_history(session_id: str) -> FileChatMessageHistory:
