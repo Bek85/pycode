@@ -1,6 +1,11 @@
 """Model configurations for LangChain LLMs"""
 
+import os
+from dotenv import load_dotenv
 from langchain.chat_models import init_chat_model
+
+# Load environment variables
+load_dotenv()
 
 # Model configurations
 MODEL_CONFIGS = {
@@ -27,6 +32,13 @@ MODEL_CONFIGS = {
         "base_url": "http://localhost:11434",  # Default Ollama port
         "temperature": 0.2,  # Adjust as needed
     },
+    "deepseek": {
+        "model": "deepseek-chat",
+        "model_provider": "openai",
+        "openai_api_key": os.getenv("DEEPSEEK_API_KEY"),
+        "openai_api_base": "https://api.deepseek.com/v1",
+        "temperature": 0.3,  # Balanced for reasoning tasks
+    },
 }
 
 
@@ -34,7 +46,7 @@ def get_llm(model_type: str):
     """Get LLM instance based on model type
 
     Args:
-        model_type: One of 'local', 'remote', 'claude', 'ollama'
+        model_type: One of 'local', 'remote', 'claude', 'ollama', 'deepseek'
 
     Returns:
         Initialized LLM instance

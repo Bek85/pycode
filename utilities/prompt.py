@@ -26,7 +26,7 @@ import langchain
 load_dotenv()
 
 # Initialize the LLM
-llm = get_llm("remote")
+llm = get_llm("deepseek")
 
 # Initialize the embeddings
 embedding_type = "openai"
