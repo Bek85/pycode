@@ -4,6 +4,7 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_chroma import Chroma
 import sys
 import os
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config.embeddings import get_embeddings
 
@@ -38,7 +39,9 @@ def main(embedding_type="openai"):
     # Create or load existing vector database
     # Note: Chroma 0.4.x automatically persists documents
     persist_dir = f"emb_{embedding_type}"
-    db = Chroma.from_documents(documents, embedding=embeddings, persist_directory=persist_dir)
+    db = Chroma.from_documents(
+        documents, embedding=embeddings, persist_directory=persist_dir
+    )
 
     # Search for similar documents
     query = "What is an interesting fact about the English language?"
