@@ -1,15 +1,10 @@
 from dotenv import load_dotenv
 
 # Handle both direct execution and module import
-try:
-    from ..config import get_llm
-except ImportError:
-    # Fallback for direct execution
-    import sys
-    import os
+import sys
+import os
+from typing import Dict
 
-    sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    from config import get_llm
 from langchain.agents import create_openai_functions_agent, create_tool_calling_agent
 from langchain.prompts import (
     HumanMessagePromptTemplate,
@@ -18,49 +13,61 @@ from langchain.prompts import (
     SystemMessagePromptTemplate,
 )
 from langchain.agents import AgentExecutor
-
-# Handle tools import for direct execution
-try:
-    from ..tools.sql import (
-        run_query_tool,
-        list_tables,
-        describe_tables,
-        describe_tables_tool,
-    )
-    from ..tools.report import generate_report_tool
-except ImportError:
-    # Fallback for direct execution
-    from tools.sql import (
-        run_query_tool,
-        list_tables,
-        describe_tables,
-        describe_tables_tool,
-    )
-    from tools.report import generate_report_tool
-import langchain
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_core.chat_history import BaseChatMessageHistory
 
-# Handle handlers import for direct execution
+# Import handlers with proper path handling (optional)
 try:
-    from ..handlers.chat_model_start_handler import ChatModelStartHandler
-except ImportError:
-    # Fallback for direct execution
     from handlers.chat_model_start_handler import ChatModelStartHandler
+except Exception:
+    # Optional dependency; proceed without callbacks if unavailable
+    ChatModelStartHandler = None  # type: ignore
+
+# Import tools and configuration
+# Keep original import style to remain compatible with different layouts
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)
+grandparent_dir = os.path.dirname(parent_dir)
+sys.path.insert(0, parent_dir)
+sys.path.insert(0, grandparent_dir)
+
+def _resolve_get_llm():
+    """Best-effort resolver for a get_llm(provider:str) factory.
+
+    Tries multiple import paths; returns a callable or None if not found.
+    """
+    try:
+        from config.models import get_llm as _g1  # type: ignore
+        return _g1
+    except Exception:
+        pass
+    try:
+        from config import get_llm as _g2  # type: ignore
+        return _g2
+    except Exception:
+        return None
+
+try:
+    # Preferred modern package layout
+    from langchain_agents_demo.tools.database import create_database_tools, get_tables_info
+    from langchain_agents_demo.tools.reporting import create_reporting_tools
+    from langchain_agents_demo.config.agent_config import get_config
+except Exception:
+    # Fallback to local relative-style imports if package name differs
+    from tools.database import create_database_tools, get_tables_info  # type: ignore
+    from tools.reporting import create_reporting_tools  # type: ignore
+    from config.agent_config import get_config  # type: ignore
 
 # langchain.debug = True
 
 load_dotenv()
+handler = ChatModelStartHandler() if ChatModelStartHandler else None
 
-handler = ChatModelStartHandler()
-
-llm = get_llm("deepseek")
-# Note: callbacks need to be added separately if needed
-# llm = llm.with_callbacks([handler])
+# Global configuration
+config = get_config()
 
 
-# Instead of using ConversationBufferMemory, use the message history approach
-# This will be passed to the agent_executor later
+# Simple in-memory message history compatible with RunnableWithMessageHistory
 class ChatMessageHistory(BaseChatMessageHistory):
     def __init__(self):
         self.messages = []
@@ -75,113 +82,127 @@ class ChatMessageHistory(BaseChatMessageHistory):
         return self.messages
 
 
-# Initialize message history
+# One shared history for the demo (single-session behavior)
 message_history = ChatMessageHistory()
 
-tools = [run_query_tool, describe_tables_tool, generate_report_tool]
 
-tables = list_tables()
+# Build tools once
+database_tools = create_database_tools(config)
+reporting_tools = create_reporting_tools(config)
+tools = database_tools + reporting_tools
 
-# table_list = tables.split("\n")
-
-# des_tables = describe_tables(table_list)
-
-# print(des_tables)
-
-prompt = ChatPromptTemplate(
-    messages=[
-        SystemMessagePromptTemplate.from_template(
-            "You are a helpful database assistant.\n"
-            f"The database has tables of: {tables}\n"
-            "Do not make any assumptions about what tables exist "
-            "or what columns exist. Instead, use the describe_tables function.\n"
-        ),
-        MessagesPlaceholder(variable_name="chat_history"),
-        HumanMessagePromptTemplate.from_template("{input}"),
-        MessagesPlaceholder(variable_name="agent_scratchpad"),
-    ],
-    input_variables=["input"],
-)
-
-# Create agents for both models
-openai_agent = create_openai_functions_agent(llm, tools, prompt)
-deepseek_agent = create_tool_calling_agent(llm, tools, prompt)
-
-# Configure agent executors
-openai_agent_executor = AgentExecutor(
-    agent=openai_agent,
-    tools=tools,
-    # verbose=True,
-)
-
-deepseek_agent_executor = AgentExecutor(
-    agent=deepseek_agent,
-    tools=tools,
-    # verbose=True,
-)
-
-# Default to deepseek agent
-agent_executor = deepseek_agent_executor
+# Precompute tables info for the prompt
+tables_info = get_tables_info(config)
 
 
-# Create a function to get chat history
-def get_message_history(session_id):
+def build_prompt(tables: str) -> ChatPromptTemplate:
+    """Create the chat prompt template using provided tables info."""
+    return ChatPromptTemplate(
+        messages=[
+            SystemMessagePromptTemplate.from_template(
+                "You are a helpful database assistant.\n"
+                f"The database has tables of: {tables}\n"
+                "Do not make any assumptions about what tables exist "
+                "or what columns exist. Instead, use the describe_tables function.\n"
+            ),
+            MessagesPlaceholder(variable_name="chat_history"),
+            HumanMessagePromptTemplate.from_template("{input}"),
+            MessagesPlaceholder(variable_name="agent_scratchpad"),
+        ],
+        input_variables=["input"],
+    )
+
+
+def get_message_history(_session_id: str):
+    """Return the single shared message history (simple demo setup)."""
     return message_history
 
 
-# Wrap both executors in RunnableWithMessageHistory
-openai_runnable_agent = RunnableWithMessageHistory(
-    openai_agent_executor,
-    get_message_history,
-    input_messages_key="input",
-    history_messages_key="chat_history",
-)
-
-deepseek_runnable_agent = RunnableWithMessageHistory(
-    deepseek_agent_executor,
-    get_message_history,
-    input_messages_key="input",
-    history_messages_key="chat_history",
-)
-
-# Default to deepseek agent
-runnable_agent = deepseek_runnable_agent
+# Cache for created runnable agents per provider
+_runnable_cache: Dict[str, RunnableWithMessageHistory] = {}
 
 
-def run_query(user_query, use_openai=False):
-    """Run query with specified model. Default uses Deepseek, set use_openai=True for GPT-4o-mini"""
-    agent = openai_runnable_agent if use_openai else deepseek_runnable_agent
-    return agent.invoke(
-        {"input": user_query}, {"configurable": {"session_id": "default"}}
+def create_runnable_agent(provider: str) -> RunnableWithMessageHistory:
+    """Create a runnable agent for the given model provider.
+
+    provider: 'openai' uses OpenAI Functions agent; anything else uses tool-calling.
+    """
+    get_llm = _resolve_get_llm()
+    if get_llm is None:
+        raise ImportError(
+            "get_llm factory not found. Please provide config.models.get_llm(provider) "
+            "or config.get_llm(provider) that returns a LangChain-compatible LLM."
+        )
+    # Map friendly provider aliases to your environment-specific names
+    provider_map = {
+        "openai": "remote",   # external config expects 'remote' for OpenAI
+        "deepseek": "deepseek",
+    }
+    resolved_provider = provider_map.get(provider.lower(), provider)
+    llm = get_llm(resolved_provider)
+    # Uncomment to attach callbacks if desired
+    # llm = llm.with_callbacks([handler])
+
+    prompt = build_prompt(tables_info)
+    if provider.lower() == "openai":
+        agent = create_openai_functions_agent(llm, tools, prompt)
+    else:
+        agent = create_tool_calling_agent(llm, tools, prompt)
+
+    executor = AgentExecutor(
+        agent=agent,
+        tools=tools,
+        # verbose=config.agent.verbose if present; kept minimal here
+    )
+
+    return RunnableWithMessageHistory(
+        executor,
+        get_message_history,
+        input_messages_key="input",
+        history_messages_key="chat_history",
     )
 
 
-def run_query_openai(user_query):
-    """Run query with OpenAI GPT-4o-mini model"""
-    return run_query(user_query, use_openai=True)
+def get_runnable(provider: str) -> RunnableWithMessageHistory:
+    """Get or create a runnable agent for a provider (cached)."""
+    key = provider.lower()
+    if key not in _runnable_cache:
+        _runnable_cache[key] = create_runnable_agent(key)
+    return _runnable_cache[key]
 
 
-def run_query_deepseek(user_query):
-    """Run query with local Deepseek model"""
-    return run_query(user_query, use_openai=False)
+def run_query(user_query: str, provider: str = "deepseek"):
+    """Execute a query with the specified model provider."""
+    agent = get_runnable(provider)
+    return agent.invoke({"input": user_query}, {"configurable": {"session_id": "default"}})
 
 
-while True:
-    user_input = input("Enter your query (or 'openai:' prefix to use GPT-4o-mini): ")
+def _detect_provider_and_strip_prefix(text: str) -> (str, str):
+    """Detect provider prefix like 'openai:' or 'deepseek:' and strip it."""
+    lowered = text.strip()
+    for p in ("openai", "deepseek"):
+        prefix = f"{p}:"
+        if lowered.startswith(prefix):
+            return p, lowered[len(prefix):].strip()
+    return "deepseek", text.strip()
 
-    # Check if user wants to use OpenAI model
-    use_openai = user_input.startswith("openai:")
-    if use_openai:
-        user_input = user_input[7:].strip()  # Remove 'openai:' prefix
 
-    # Use default query if user input is empty
-    user_query = (
-        user_input
-        or "How many orders are there? Write the result to an html report file."
-    )
+def _pretty_model_name(provider: str) -> str:
+    return {"openai": "GPT-4o-mini", "deepseek": "Deepseek V3.1"}.get(provider.lower(), provider)
 
-    model_name = "GPT-4o-mini" if use_openai else "Deepseek V3.1"
-    print(f"Using {model_name}...")
 
-    result = run_query(user_query, use_openai=use_openai)
-    print(result["output"])
+if __name__ == "__main__":
+    while True:
+        user_input = input(
+            "Enter your query (prefix with 'openai:' or 'deepseek:' to pick model): "
+        )
+
+        provider, stripped = _detect_provider_and_strip_prefix(user_input)
+        user_query = (
+            stripped
+            or "How many orders are there? Write the result to an html report file."
+        )
+
+        print(f"Using {_pretty_model_name(provider)}...")
+        result = run_query(user_query, provider=provider)
+        print(result["output"])
