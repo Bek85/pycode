@@ -6,7 +6,7 @@ import os
 from typing import Dict
 
 from langchain.agents import create_openai_functions_agent, create_tool_calling_agent
-from langchain.prompts import (
+from langchain_core.prompts import (
     HumanMessagePromptTemplate,
     ChatPromptTemplate,
     MessagesPlaceholder,
@@ -31,6 +31,7 @@ grandparent_dir = os.path.dirname(parent_dir)
 sys.path.insert(0, parent_dir)
 sys.path.insert(0, grandparent_dir)
 
+
 def _resolve_get_llm():
     """Best-effort resolver for a get_llm(provider:str) factory.
 
@@ -38,18 +39,24 @@ def _resolve_get_llm():
     """
     try:
         from config.models import get_llm as _g1  # type: ignore
+
         return _g1
     except Exception:
         pass
     try:
         from config import get_llm as _g2  # type: ignore
+
         return _g2
     except Exception:
         return None
 
+
 try:
     # Preferred modern package layout
-    from langchain_agents_demo.tools.database import create_database_tools, get_tables_info
+    from langchain_agents_demo.tools.database import (
+        create_database_tools,
+        get_tables_info,
+    )
     from langchain_agents_demo.tools.reporting import create_reporting_tools
     from langchain_agents_demo.config.agent_config import get_config
 except Exception:
@@ -135,7 +142,7 @@ def create_runnable_agent(provider: str) -> RunnableWithMessageHistory:
         )
     # Map friendly provider aliases to your environment-specific names
     provider_map = {
-        "openai": "remote",   # external config expects 'remote' for OpenAI
+        "openai": "remote",  # external config expects 'remote' for OpenAI
         "deepseek": "deepseek",
     }
     resolved_provider = provider_map.get(provider.lower(), provider)
@@ -174,7 +181,9 @@ def get_runnable(provider: str) -> RunnableWithMessageHistory:
 def run_query(user_query: str, provider: str = "deepseek"):
     """Execute a query with the specified model provider."""
     agent = get_runnable(provider)
-    return agent.invoke({"input": user_query}, {"configurable": {"session_id": "default"}})
+    return agent.invoke(
+        {"input": user_query}, {"configurable": {"session_id": "default"}}
+    )
 
 
 def _detect_provider_and_strip_prefix(text: str) -> (str, str):
@@ -183,12 +192,14 @@ def _detect_provider_and_strip_prefix(text: str) -> (str, str):
     for p in ("openai", "deepseek"):
         prefix = f"{p}:"
         if lowered.startswith(prefix):
-            return p, lowered[len(prefix):].strip()
+            return p, lowered[len(prefix) :].strip()
     return "deepseek", text.strip()
 
 
 def _pretty_model_name(provider: str) -> str:
-    return {"openai": "GPT-4o-mini", "deepseek": "Deepseek V3.1"}.get(provider.lower(), provider)
+    return {"openai": "GPT-4o-mini", "deepseek": "Deepseek V3.1"}.get(
+        provider.lower(), provider
+    )
 
 
 if __name__ == "__main__":
