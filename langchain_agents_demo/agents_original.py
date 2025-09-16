@@ -15,6 +15,7 @@ from langchain_core.prompts import (
 from langchain.agents import AgentExecutor
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_core.chat_history import BaseChatMessageHistory
+import langchain
 
 # Import handlers with proper path handling (optional)
 try:
@@ -65,7 +66,7 @@ except Exception:
     from tools.reporting import create_reporting_tools  # type: ignore
     from config.agent_config import get_config  # type: ignore
 
-# langchain.debug = True
+langchain.debug = True
 
 load_dotenv()
 handler = ChatModelStartHandler() if ChatModelStartHandler else None
