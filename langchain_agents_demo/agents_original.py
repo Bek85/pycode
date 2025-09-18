@@ -21,8 +21,13 @@ import langchain
 try:
     from handlers.chat_model_start_handler import ChatModelStartHandler
 except Exception:
-    # Optional dependency; proceed without callbacks if unavailable
-    ChatModelStartHandler = None  # type: ignore
+    try:
+        # Try from parent directory
+        sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        from handlers.chat_model_start_handler import ChatModelStartHandler
+    except Exception:
+        # Optional dependency; proceed without callbacks if unavailable
+        ChatModelStartHandler = None  # type: ignore
 
 # Import tools and configuration
 # Keep original import style to remain compatible with different layouts
@@ -66,7 +71,7 @@ except Exception:
     from tools.reporting import create_reporting_tools  # type: ignore
     from config.agent_config import get_config  # type: ignore
 
-langchain.debug = True
+# langchain.debug = True
 
 load_dotenv()
 handler = ChatModelStartHandler() if ChatModelStartHandler else None
@@ -148,8 +153,6 @@ def create_runnable_agent(provider: str) -> RunnableWithMessageHistory:
     }
     resolved_provider = provider_map.get(provider.lower(), provider)
     llm = get_llm(resolved_provider)
-    # Uncomment to attach callbacks if desired
-    # llm = llm.with_callbacks([handler])
 
     prompt = build_prompt(tables_info)
     if provider.lower() == "openai":
@@ -157,18 +160,28 @@ def create_runnable_agent(provider: str) -> RunnableWithMessageHistory:
     else:
         agent = create_tool_calling_agent(llm, tools, prompt)
 
+    # Add callbacks to executor if handler is available
+    callbacks = [handler] if handler else None
+
     executor = AgentExecutor(
         agent=agent,
         tools=tools,
+        callbacks=callbacks,
         # verbose=config.agent.verbose if present; kept minimal here
     )
 
-    return RunnableWithMessageHistory(
+    runnable = RunnableWithMessageHistory(
         executor,
         get_message_history,
         input_messages_key="input",
         history_messages_key="chat_history",
     )
+
+    # Add callbacks to the runnable as well if handler is available
+    if handler:
+        runnable = runnable.with_config({"callbacks": [handler]})
+
+    return runnable
 
 
 def get_runnable(provider: str) -> RunnableWithMessageHistory:
@@ -204,12 +217,10 @@ def _pretty_model_name(provider: str) -> str:
 
 
 if __name__ == "__main__":
-    while True:
-        user_input = input(
-            "Enter your query (prefix with 'openai:' or 'deepseek:' to pick model): "
-        )
-
-        provider, stripped = _detect_provider_and_strip_prefix(user_input)
+    # Check if we have command line arguments for testing
+    if len(sys.argv) > 1:
+        test_query = " ".join(sys.argv[1:])
+        provider, stripped = _detect_provider_and_strip_prefix(test_query)
         user_query = (
             stripped
             or "How many orders are there? Write the result to an html report file."
@@ -218,3 +229,18 @@ if __name__ == "__main__":
         print(f"Using {_pretty_model_name(provider)}...")
         result = run_query(user_query, provider=provider)
         print(result["output"])
+    else:
+        while True:
+            user_input = input(
+                "Enter your query (prefix with 'openai:' or 'deepseek:' to pick model): "
+            )
+
+            provider, stripped = _detect_provider_and_strip_prefix(user_input)
+            user_query = (
+                stripped
+                or "How many orders are there? Write the result to an html report file."
+            )
+
+            print(f"Using {_pretty_model_name(provider)}...")
+            result = run_query(user_query, provider=provider)
+            print(result["output"])
