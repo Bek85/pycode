@@ -26,6 +26,14 @@ class ChatModelStartHandler(BaseCallbackHandler):
                         title="AI Function Call",
                         color="cyan",
                     )
+                elif hasattr(message, "tool_calls") and message.tool_calls:
+                    # Handle new tool_calls format
+                    for tool_call in message.tool_calls:
+                        boxen_print(
+                            f"Running tool {tool_call['name']} with arguments {tool_call['args']}",
+                            title="AI Function Call",
+                            color="cyan",
+                        )
                 else:
                     # Handle both empty and non-empty AI messages
                     content = (
@@ -39,8 +47,16 @@ class ChatModelStartHandler(BaseCallbackHandler):
             elif msg_type == "human":
                 boxen_print(message.content, title="Human", color="green")
 
-            elif msg_type == "function":
-                boxen_print(message.content, title="Function Result", color="purple")
+            elif msg_type in ["function", "tool"]:
+                # Handle both function and tool messages
+                tool_name = "Tool"
+                if hasattr(message, 'name') and message.name:
+                    tool_name = message.name
+                elif hasattr(message, 'tool_call_id') and message.tool_call_id:
+                    # Extract tool name from the tool_call_id or just show "Tool Result"
+                    tool_name = "Tool"
+
+                boxen_print(message.content, title=f"{tool_name} Result", color="purple")
 
             else:
                 # Fallback for any other message types
