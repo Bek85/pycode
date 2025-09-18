@@ -157,6 +157,36 @@ class DatabaseService:
             log_error(e, f"Failed to describe tables: {table_names}")
             raise DatabaseError(f"Failed to describe tables: {str(e)}") from e
     
+    def _optimize_query_for_large_results(self, query: str) -> str:
+        """
+        Automatically optimize queries that might return large result sets.
+
+        Args:
+            query: Original SQL query
+
+        Returns:
+            Optimized query with appropriate limits
+        """
+        query_upper = query.upper().strip()
+
+        # If query already has LIMIT, leave it alone
+        if 'LIMIT' in query_upper:
+            return query
+
+        # For SELECT queries without LIMIT, add safety limits
+        if query_upper.startswith('SELECT'):
+            # Check if this looks like an aggregation query
+            has_aggregation = any(keyword in query_upper for keyword in
+                                ['COUNT(', 'SUM(', 'AVG(', 'MAX(', 'MIN(', 'GROUP BY'])
+
+            # If it's not an aggregation and doesn't have LIMIT, add one
+            if not has_aggregation:
+                # Add LIMIT 1000 as safety
+                query = query.rstrip(';') + ' LIMIT 1000'
+                self.logger.info(f"Added safety LIMIT to query: {query[:50]}...")
+
+        return query
+
     def execute_query(self, query: str) -> Union[List[Dict[str, Any]], str]:
         """
         Execute a SQL query with proper error handling.
@@ -170,8 +200,12 @@ class DatabaseService:
         start_time = time.time()
         
         try:
+            # Optimize query to prevent large result sets
+            original_query = query
+            query = self._optimize_query_for_large_results(query)
+
             log_function_call("execute_query", {"query_preview": query[:100]})
-            
+
             # Basic query validation
             if not query.strip():
                 return "Empty query provided"
@@ -189,18 +223,35 @@ class DatabaseService:
             with self.connection_manager.get_connection() as conn:
                 cursor = conn.cursor()
                 cursor.execute(query)
-                
+
                 if query_upper.startswith('SELECT'):
                     rows = cursor.fetchall()
                     # Convert sqlite3.Row objects to dictionaries
                     result = [dict(row) for row in rows]
-                    
+
+                    # Truncate results if too large to prevent context overflow
+                    MAX_ROWS = 100  # Reasonable limit for context window
+                    original_count = len(result)
+
+                    if len(result) > MAX_ROWS:
+                        result = result[:MAX_ROWS]
+                        # Add a message indicating truncation
+                        truncation_info = {
+                            "_truncated": True,
+                            "_total_rows": original_count,
+                            "_showing_rows": len(result),
+                            "_message": f"Results truncated to {MAX_ROWS} rows out of {original_count} total rows"
+                        }
+                        result.append(truncation_info)
+
                     log_performance("execute_query", time.time() - start_time, {
                         "query_type": "SELECT",
-                        "rows_returned": len(result)
+                        "rows_returned": len(result),
+                        "original_count": original_count,
+                        "truncated": original_count > MAX_ROWS
                     })
-                    log_function_call("execute_query", result=f"Returned {len(result)} rows")
-                    
+                    log_function_call("execute_query", result=f"Returned {len(result)} rows (original: {original_count})")
+
                     return result
                 else:
                     # For non-SELECT queries (though we block most above)

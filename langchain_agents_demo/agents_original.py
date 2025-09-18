@@ -116,7 +116,13 @@ def build_prompt(tables: str) -> ChatPromptTemplate:
                 "You are a helpful database assistant.\n"
                 f"The database has tables of: {tables}\n"
                 "Do not make any assumptions about what tables exist "
-                "or what columns exist. Instead, use the describe_tables function.\n"
+                "or what columns exist. Instead, use the describe_tables function.\n\n"
+                "IMPORTANT QUERY GUIDELINES:\n"
+                "- For queries that might return many rows, use LIMIT to avoid large result sets\n"
+                "- For 'most ordered products' or similar queries, use aggregate functions (COUNT, SUM) with GROUP BY and ORDER BY\n"
+                "- Use TOP N patterns like: ORDER BY count DESC LIMIT 10\n"
+                "- Prefer aggregated results over raw data when generating reports\n"
+                "- If you need to analyze large datasets, break them into smaller queries\n"
             ),
             MessagesPlaceholder(variable_name="chat_history"),
             HumanMessagePromptTemplate.from_template("{input}"),
